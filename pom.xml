@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <packaging>jar</packaging>
+  <groupId>org.clojars.cyrik</groupId>
+  <artifactId>omni-trace</artifactId>
+  <version>LATEST</version>
+  <name>omni-trace</name>
+  <description>Omnipotent/omniscient tracing core for debugging clojure(script)</description>
+  <url>https://github.com/Cyrik/omni-trace</url>
+  <repositories>
+    <repository>
+      <id>clojars</id>
+      <url>https://repo.clojars.org/</url>
+    </repository>
+  </repositories>
+  <scm>
+    <url>https://github.com/Cyrik/omni-trace</url>
+    <connection>scm:git:git://github.com/Cyrik/omni-trace.git</connection>
+    <developerConnection>scm:git:ssh://git@github.com/Cyrik/omni-trace.git</developerConnection>
+    <tag>HEAD</tag>
+  </scm>
+  <developers>
+    <developer>
+      <name>Lukas Domagala</name>
+    </developer>
+  </developers>
+  <licenses>
+    <license>
+      <name>Eclipse Public License</name>
+      <url>http://www.eclipse.org/legal/epl-v10.html</url>
+    </license>
+  </licenses>
+
+</project>

@@ -1,8 +1,8 @@
-pom.xml
 .cpcache/
 .shadow-cljs/
 .cljs_node_repl/
 out/
+target/
 node_modules/
 resources/public/js/
 .clj-kondo/.cache/

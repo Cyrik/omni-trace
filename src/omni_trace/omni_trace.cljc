@@ -10,11 +10,11 @@
 (def ^:dynamic *trace-log-parent* nil)
 (defonce workspace (atom {}))
 
-(defn- now []
+(defn now []
   #?(:clj (System/currentTimeMillis)
      :cljs (.now js/Date)))
 
-(defn- trace-fn-call [name f args opts]
+(defn trace-fn-call [name f args opts]
   (let [parent (or *trace-log-parent*
                    {:workspace (::workspace opts) :parent :root})
         call-id (keyword (gensym))
@@ -26,7 +26,7 @@
            #(assoc % call-id {:id call-id :name name :args args :start before-time :end (now) :parent (:parent parent) :return res}))
     res))
 
-(defn- instrumented [sym v opts]
+(defn instrumented [sym v opts]
   (let [to-wrap @v]
     (when (fn? to-wrap)
       (let [instrumented (fn [& args]
@@ -34,7 +34,7 @@
         (swap! instrumented-vars assoc v {:orig to-wrap :instrumented instrumented})
         instrumented))))
 
-(defn- uninstrumented [sym v opts]
+(defn uninstrumented [sym v opts]
   (when-let [wrapped (@instrumented-vars v)]
     (swap! instrumented-vars dissoc v)
     (:orig wrapped)))
@@ -47,7 +47,7 @@
     []))
 
 (macros/deftime
- (defn- ->sym [v]
+ (defn ->sym [v]
    (let [meta (meta v)]
      (symbol (name (ns-name (:ns meta))) (name (:name meta)))))
  
