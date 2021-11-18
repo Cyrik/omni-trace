@@ -3,7 +3,10 @@ Omnipotent/omniscient tracing core for debugging clojure(script)
 
 very early alpha, api is still unstable
 
-add it to your deps: 
+
+[![Clojars Project](https://img.shields.io/clojars/v/org.clojars.cyrik/omni-trace.svg)](https://clojars.org/org.clojars.cyrik/omni-trace)
+
+or just through github source: 
 
 omni_trace/omni_trace       {:git/url "https://github.com/Cyrik/omni-trace"
                                        :sha     "5def7f9ad31d703317e5be5e64a57322e1c89eed"}
