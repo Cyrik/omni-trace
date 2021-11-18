@@ -1,0 +1,20 @@
+pom.xml
+.cpcache/
+.shadow-cljs/
+.cljs_node_repl/
+out/
+node_modules/
+resources/public/js/
+.clj-kondo/.cache/
+.clj-kondo/rewrite-clj/
+.DS_Store
+.nrepl-port
+
+# vscode
+*.calva/
+.lsp/
+.portal/
+
+# intellij files
+.idea/
+*.iml

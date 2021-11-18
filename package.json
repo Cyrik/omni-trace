@@ -1,0 +1,14 @@
+{
+  "name": "omni-trace",
+  "version": "0.1.0",
+  "description": "clojure(script) tracing library",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Lukas Domagala",
+  "license": "Eclipse Public License - v 2.0",
+  "devDependencies": {
+    "shadow-cljs": "^2.16.4"
+  }
+}

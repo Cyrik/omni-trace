@@ -1,0 +1,22 @@
+{:nrepl    {:port 8777}
+ :verbose true
+
+ :log {:level :debug}
+ :deps     {:aliases [:cljs :dev :shadow-cljs]}
+;;  :deps-aliases [:cider]
+;;  :deps true
+
+ :dev-http {8280 "resources/public"}
+ :build-defaults
+ {:compiler-options {:infer-externs :auto}}
+ :builds   {:app          {:target     :browser
+                           :output-dir "resources/public/js/compiled"
+                           :asset-path "/js/compiled"
+                           :modules    {:app {:init-fn omni-trace.omni-trace/init}}
+                           :devtools   {:preloads    [#_devtools.preload
+                                                      #_user]
+                                        :after-load portal.ui.core/reload!
+                                        :repl-pprint true}
+                           :dev        {:compiler-options {:infer-externs :auto}}
+                           :release    {:compiler-options {:warnings-as-errors #{:undeclared-var}
+                                                           :infer-externs      :auto}}}}}
