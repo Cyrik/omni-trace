@@ -11,7 +11,7 @@ on:
 jobs:
   clojars:
     runs-on: ubuntu-latest
-
+    environment: release
     steps:
       # This step checks out a copy of your repository.
       - uses: actions/checkout@v2
