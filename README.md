@@ -8,9 +8,13 @@ very early alpha, api is still unstable
 
 or just through github source: 
 
-omni_trace/omni_trace       {:git/url "https://github.com/Cyrik/omni-trace"
-                                       :sha     "5def7f9ad31d703317e5be5e64a57322e1c89eed"}
+```clojure
+
+:deps {omni_trace/omni_trace  {:git/url "https://github.com/Cyrik/omni-trace"
+                               :sha     "5def7f9ad31d703317e5be5e64a57322e1c89eed"}}
                           
+```
+
 ## Usage
 
 ```clojure
