@@ -31,6 +31,9 @@
 
   o/instrumented-vars
 
+  (tap> ^{:portal.viewer/default :portal.viewer/hiccup}
+   [:div "custom thing here" [:portal.viewer/inspector {:complex :data-structure}]])
+  
   (o/uninstrument-ns 'omni-trace.testing-ns)
   (macroexpand '(o/instrument-ns 'omni-trace.testing-ns))
 

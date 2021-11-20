@@ -107,4 +107,5 @@
 (defn retrieve-change-returned
   [machine]
   [(:change-returned machine)
+   (throw #?(:cljs (js/Error. "Oops") :clj (Exception. "Oops")))
    (dissoc machine :change-returned)])

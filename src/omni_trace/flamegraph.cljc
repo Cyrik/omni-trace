@@ -23,6 +23,7 @@
        {:signal
         "{n: datum.name,
          a:datum.args,
+         t:datum.thrown,
          r: datum.return}"}}
       :update
       {:x {:field "a0"}
@@ -47,7 +48,7 @@
        :parentKey "parent"}
       {:type "partition"
        ;:field "size"
-       :sort {:field "value"}
+       :sort {:field "id"}
        :padding 2
        :size
        [{:signal "width"}

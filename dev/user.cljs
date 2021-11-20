@@ -14,7 +14,8 @@
       (e/insert-coin :dime)
       (e/insert-coin :nickel)
       (e/insert-coin :penny)
-      (e/press-button :a1))
+      (e/press-button :a1)
+      (e/retrieve-change-returned))
   ;look at traces for every function that was traced
   @o/workspace
   ;connect to portal
@@ -22,9 +23,11 @@
   (add-tap #'p/submit)
   ;send the trace to portal as a vegajs flamegraph
   (tap> (flame/flamegraph (flame/flamedata @o/workspace)))
+  (tap> ^{:portal.viewer/default :portal.viewer/hiccup} [:button {:onclick (str "alert('123')")} (str "alert('123')")])
+  [:button {:onclick "alert('123')"} "Test it!"]
   ;remove tracing from a namesapce
   (o/uninstrument-ns 'omni-trace.testing-ns)
-
+  (o/reset-workspace!)
   o/instrumented-vars
   (macroexpand '(o/uninstrument-ns 'omni-trace.testing-ns))
   (alter-meta! (var omni-trace.testing-ns/insert-coin) assoc-in [:stuffs] "yeah123")

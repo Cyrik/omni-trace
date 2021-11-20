@@ -1,7 +1,7 @@
 # omni-trace
 Omnipotent/omniscient tracing core for debugging clojure(script)
 
-very early alpha, api is still unstable
+very early alpha, api is still unstable but its only for dev time so there shouldn't be any problems
 
 
 [![Clojars Project](https://img.shields.io/clojars/v/org.clojars.cyrik/omni-trace.svg)](https://clojars.org/org.clojars.cyrik/omni-trace)
@@ -34,7 +34,8 @@ or just through github source:
       (e/insert-coin :dime)
       (e/insert-coin :nickel)
       (e/insert-coin :penny)
-      (e/press-button :a1))
+      (e/press-button :a1)
+      (e/retrieve-change-returned))
   ;look at traces for every function that was traced
   @o/workspace
   ;connect to portal
@@ -47,6 +48,13 @@ or just through github source:
 ```
 
 ![Screenshot](docs/flamegraph.png)
+
+## Features
+- Works in clojure and clojurescript
+- Instrument whole namespaces from the repl
+- show the trace as a Flamegraph in Portal or anything else that understands Vega.js
+- remembers the call that caused the exception and shows the arguments
+
 
 ## In the works
 - better trace output to the REPL

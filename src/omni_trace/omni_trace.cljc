@@ -14,16 +14,29 @@
   #?(:clj (System/currentTimeMillis)
      :cljs (.now js/Date)))
 
+(defn reset-workspace! []
+  (reset! workspace {}))
+
+(defn log [workspace id trace]
+  (swap! workspace assoc id trace))
+
 (defn trace-fn-call [name f args opts]
   (let [parent (or *trace-log-parent*
                    {:workspace (::workspace opts) :parent :root})
-        call-id (keyword (gensym))
+        call-id (keyword (gensym ""))
         before-time (now)
         this (assoc parent :parent call-id)
         res (binding [*trace-log-parent* this]
-              (apply f args))]
-    (swap! (:workspace parent) 
-           #(assoc % call-id {:id call-id :name name :args args :start before-time :end (now) :parent (:parent parent) :return res}))
+              (try
+                (apply f args)
+                (catch #?(:clj Throwable :cljs :default) t
+                  (log (:workspace parent)
+                       call-id
+                       {:id call-id :name name :args args :start before-time :end (now) :parent (:parent parent) :thrown (#?(:clj Throwable->map :cljs identity) t)})
+                  (throw t))))]
+    (log (:workspace parent) 
+         call-id
+         {:id call-id :name name :args args :start before-time :end (now) :parent (:parent parent) :return res})
     res))
 
 (defn instrumented [sym v opts]
