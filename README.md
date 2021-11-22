@@ -54,14 +54,15 @@ or just through github source:
 - Instrument whole namespaces from the repl
 - show the trace as a Flamegraph in Portal or anything else that understands Vega.js
 - remembers the call that caused the exception and shows the arguments
+- stops tracing callsites if they have been called to often, default is 100, can be changed with :omni-trace.omni-trace/max-callsite-log option
 
 
 ## In the works
 - better trace output to the REPL
+- performance
 - callbacks from Portal so you can rerun an updated function with the old params by clicking on it in the Flamegraph
 - [Debux](https://github.com/philoskim/debux) integration for inner function traces
 - trace a function recursivley so you can see the whole graph without without knowing what to trace
-- stop tracing functions that get called to often, so that mapping doesn't produce to much data
 - (maybe) timetravel in trace
 - [Calva](https://github.com/BetterThanTomorrow/calva/) integration to display traces inline
 

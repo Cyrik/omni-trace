@@ -13,11 +13,14 @@
         (with-out-str
           (pprint/pprint data))))
 
-
+(defn test-inc [x]
+  (inc x))
 
 (comment
   (def portal (po/open))
   (add-tap #'po/submit)
+  (o/instrument-fn 'test-inc)
+  (mapv test-inc (range 1000))
   (o/instrument-ns 'omni-trace.testing-ns
                        {::o/workspace omni-trace.omni-trace/workspace})
   (-> e/machine-init
@@ -29,6 +32,7 @@
   (flame/flamegraph (flame/flamedata @o/workspace))
   (meta #'e/insert-coin)
 
+
   o/instrumented-vars
 
   (tap> ^{:portal.viewer/default :portal.viewer/hiccup}
@@ -37,7 +41,8 @@
   (o/uninstrument-ns 'omni-trace.testing-ns)
   (macroexpand '(o/instrument-ns 'omni-trace.testing-ns))
 
-
+  (count (:log @o/workspace))
+  (o/reset-workspace!)
   (intern *ns* '~'symname "<<symdefinition>>")
   .)
   

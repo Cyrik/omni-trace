@@ -8,17 +8,28 @@
 
 (defonce instrumented-vars (atom {}))
 (def ^:dynamic *trace-log-parent* nil)
-(defonce workspace (atom {}))
+(def empty-workspace {:log {} :max-callsites #{}})
+(defonce workspace (atom empty-workspace))
+
+(def default-callsite-log 100)
 
 (defn now []
   #?(:clj (System/currentTimeMillis)
      :cljs (.now js/Date)))
 
 (defn reset-workspace! []
-  (reset! workspace {}))
+  (reset! workspace empty-workspace))
 
-(defn log [workspace id trace]
-  (swap! workspace assoc id trace))
+(defn callsite [trace]
+  [(:parent trace)(:name trace)])
+
+(defn same-callsite? [trace1 trace2]
+  (= (callsite trace1) (callsite trace2)))
+(defn log [workspace id trace opts]
+  (if (< (count (filter #(same-callsite? trace (second %)) (:log @workspace))) 
+         (get opts ::max-callsite-log default-callsite-log))
+    (swap! workspace assoc-in [:log id] trace)
+    (swap! workspace assoc :max-callsites (callsite trace))))
 
 (defn trace-fn-call [name f args opts]
   (let [parent (or *trace-log-parent*
@@ -32,11 +43,13 @@
                 (catch #?(:clj Throwable :cljs :default) t
                   (log (:workspace parent)
                        call-id
-                       {:id call-id :name name :args args :start before-time :end (now) :parent (:parent parent) :thrown (#?(:clj Throwable->map :cljs identity) t)})
+                       {:id call-id :name name :args args :start before-time :end (now) :parent (:parent parent) :thrown (#?(:clj Throwable->map :cljs identity) t)}
+                       opts)
                   (throw t))))]
     (log (:workspace parent) 
          call-id
-         {:id call-id :name name :args args :start before-time :end (now) :parent (:parent parent) :return res})
+         {:id call-id :name name :args args :start before-time :end (now) :parent (:parent parent) :return res}
+         opts)
     res))
 
 (defn instrumented [sym v opts]
@@ -113,7 +126,7 @@
   (defn clj-instrument-fn [sym opts instrumenter]
     (when-let [v (resolve sym)]
       (let [var-name (->sym v)]
-        (when-let [instrumented-fn (instrumenter sym v opts)]
+        (when-let [instrumented-fn (instrumenter var-name v opts)]
           #?(:clj (alter-var-root v (constantly instrumented-fn)))
           var-name))))
 
@@ -127,6 +140,13 @@
          (distinct)
          (mapv (fn [sym] (mapper sym opts instrumenter)))
          (remove nil?)))
+  
+  (defmacro instrument-fn
+    ([sym]
+     `(instrument-fn ~sym {::workspace workspace}))
+    ([sym opts]
+     (macros/case :clj `(clj-instrument-fn ~sym ~opts instrumented)
+                  :cljs `(cljs-instrument-ns ~sym ~opts))))
   
   (defmacro instrument-ns
     ([sym-or-syms]

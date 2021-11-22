@@ -1,7 +1,7 @@
 (ns omni-trace.flamegraph)
 
 (defn flamedata [worksapce]
-  (into [] (conj (vals worksapce) {:parent nil :name "root" :id :root})))
+  (into [] (conj (vals (:log worksapce)) {:parent nil :name "root" :id :root})))
 
 (defn flamegraph [data]
   {:title "flame"
