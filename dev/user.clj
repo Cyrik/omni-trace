@@ -29,7 +29,7 @@
       (e/insert-coin :nickel)
       (e/insert-coin :penny)
       (e/press-button :a1))
-  (flame/flamegraph (flame/flamedata @o/workspace))
+  (flame/flamegraph-with-click (flame/flamedata @o/workspace))
   (meta #'e/insert-coin)
 
 

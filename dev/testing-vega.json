@@ -1,0 +1,820 @@
+{
+    "autosize": "pad",
+    "height": 600,
+    "width": 600,
+    "background": "#2e3440",
+    "scales": [
+      {
+        "name": "color",
+        "type": "ordinal",
+        "domain": {
+          "field": "depth",
+          "data": "filter-tree",
+          "sort": {"field": "id","order": "descending"}
+        },
+        "range": {"scheme": "tableau20"}
+      }
+    ],
+    "signals": [
+      {
+        "name": "clicked",
+        "value": null,
+        "on": [
+          {
+            "events": "click",
+            "update": "datum ? {value: datum.id, depth: datum.depth} : null",
+            "force": true
+          }
+        ]
+      },
+      {
+        "name": "clear",
+        "value": true,
+        "on": [
+          {"events": "mouseup[!event.item]", "update": "true", "force": true}
+        ]
+      },
+      {
+        "name": "shift",
+        "value": false,
+        "on": [{"events": "click", "update": "event.shiftKey", "force": true}]
+      }
+    ],
+    "padding": 30,
+    "marks": [
+      {
+        "type": "rect",
+        "name": "flame",
+        "sort": {"field": "datum.id", "order": "descending"},
+        "from": {"data": "filter-tree"},
+        "encode": {
+          "update": {
+            "y": {"field": {"datum": "r0"}},
+            "stroke": {"value": "white"},
+            "fill": [
+              {"test": "clicked && datum.id === clicked.value", "value": "#ddd"},
+              {"scale": "color", "field": "depth"}
+            ],
+            "strokeWidth": {"value": 0.1},
+            "x": {"field": "a0"},
+            "y2": {"field": "r1"},
+            "x2": {"field": "a1"},
+            "opacity": [
+                {"test": "!length(data('selected')) || indata('filter-tree', 'id', datum.id)", "value": 0.5},
+                {"value": 0}
+              ],
+            "tooltip": {
+              "signal": "{n: datum.name,\n t:datum.thrown\n,        a:datum.args,\n         r: datum.return}"
+            }
+          },
+          "hover": {
+            "stroke": {"value": "red"},
+            "strokeWidth": {"value": 2},
+            "zindex": {"value": 1}
+          }
+        }
+      },
+      {
+        "type": "text",
+        "from": {"data": "filter-tree"},
+        "interactive": false,
+        "encode": {
+          "enter": {
+            "font": {"value": "Helvetica Neue, Arial"},
+            "align": {"value": "center"},
+            "baseline": {"value": "middle"},
+            "fill": {"value": "white"},
+            "text": {"field": "name"}
+          },
+          "update": {
+            "fontSize": {"signal": "0.05 * (datum.a1 - datum.a0)"},
+            "x": {"signal": "0.5 * (datum.a0 + datum.a1)"},
+            "y": {"signal": "0.5 * (datum.r0 + datum.r1)"}
+          }
+        }
+      }
+    ],
+    "$schema": "https://vega.github.io/schema/vega/v5.json",
+    "data": [
+      {
+        "name": "selected",
+        "on": [
+          {"trigger": "clear", "remove": true},
+          {"trigger": "!shift", "remove": true},
+          {"trigger": "!shift && clicked", "insert": "clicked"},
+          {"trigger": "shift && clicked", "toggle": "clicked"}
+        ]
+      },
+      {
+        "name": "selected-depth-range",
+        "source": "selected",
+        "transform": [
+          {"type": "aggregate", "fields": ["depth"], "ops": ["max"], "as": ["m"]}
+        ]
+      },
+      {
+        "name": "tree",
+        "transform": [{"key": "id", "parentKey": "parent", "type": "stratify"}],
+        "values": [
+          {"parent": null, "name": "root", "id": "root"},
+          {
+            "args": [["quarter", "quarter", "nickel"]],
+            "parent": "G__150",
+            "return": 0.55,
+            "name": "omni-trace.testing-ns/calc-coin-value",
+            "start": 1637431413788,
+            "id": "G__151",
+            "end": 1637431413788
+          },
+          {
+            "args": [
+              {
+                "coins-inserted": [],
+                "coins-returned": [],
+                "dispensed": null,
+                "inventory": {"a1": {"name": "taco", "qty": 10, "price": 0.85}},
+                "err-msg": null
+              },
+              "quarter"
+            ],
+            "parent": "root",
+            "return": {
+              "coins-inserted": ["quarter"],
+              "coins-returned": [],
+              "dispensed": null,
+              "inventory": {"a1": {"name": "taco", "qty": 10, "price": 0.85}},
+              "err-msg": null
+            },
+            "name": "omni-trace.testing-ns/insert-coin",
+            "start": 1637431413788,
+            "id": "G__127",
+            "end": 1637431413788
+          },
+          {
+            "args": [
+              {
+                "coins-inserted": ["quarter", "dime", "nickel", "penny"],
+                "coins-returned": [],
+                "dispensed": null,
+                "inventory": {"a1": {"name": "taco", "qty": 10, "price": 0.85}},
+                "err-msg": null
+              },
+              "a1"
+            ],
+            "parent": "G__132",
+            "return": {"name": "taco", "qty": 10, "price": 0.85},
+            "name": "omni-trace.testing-ns/get-selection",
+            "start": 1637431413788,
+            "id": "G__133",
+            "end": 1637431413788,
+            "a0": 518.875,
+            "r0": 437.6000000000001,
+            "a1": 620.25,
+            "r1": 581.4666666666667,
+            "depth": 3,
+            "children": 0
+          },
+          {
+            "args": [
+              {
+                "coins-inserted": ["quarter", "dime", "nickel", "penny"],
+                "coins-returned": [],
+                "dispensed": null,
+                "inventory": {"a1": {"name": "taco", "qty": 10, "price": 0.85}},
+                "err-msg": null
+              },
+              {"name": "taco", "qty": 10, "price": 0.85}
+            ],
+            "parent": "G__135",
+            "return": ["quarter", "quarter", "nickel"],
+            "name": "omni-trace.testing-ns/calc-change-to-return",
+            "start": 1637431413788,
+            "id": "G__137",
+            "end": 1637431413788,
+            "a0": 829,
+            "r0": 437.6000000000001,
+            "a1": 1654,
+            "r1": 581.4666666666667,
+            "depth": 3,
+            "children": 3
+          },
+          {
+            "args": [
+              {
+                "coins-inserted": ["quarter", "dime", "nickel"],
+                "coins-returned": [],
+                "dispensed": null,
+                "inventory": {"a1": {"name": "taco", "qty": 10, "price": 0.85}},
+                "err-msg": null
+              },
+              "penny"
+            ],
+            "parent": "root",
+            "return": {
+              "coins-inserted": ["quarter", "dime", "nickel", "penny"],
+              "coins-returned": [],
+              "dispensed": null,
+              "inventory": {"a1": {"name": "taco", "qty": 10, "price": 0.85}},
+              "err-msg": null
+            },
+            "name": "omni-trace.testing-ns/insert-coin",
+            "start": 1637431413788,
+            "id": "G__130",
+            "end": 1637431413788,
+            "a0": 105.375,
+            "r0": 145.86666666666667,
+            "a1": 206.75,
+            "r1": 289.73333333333335,
+            "depth": 1,
+            "children": 0
+          },
+          {
+            "args": [["quarter"]],
+            "parent": "G__142",
+            "return": 0.25,
+            "name": "omni-trace.testing-ns/calc-coin-value",
+            "start": 1637431413788,
+            "id": "G__143",
+            "end": 1637431413788,
+            "a0": 1139.125,
+            "r0": 875.2000000000002,
+            "a1": 1240.5,
+            "r1": 1019.066666666667,
+            "depth": 6,
+            "children": 0
+          },
+          {
+            "args": [0.55, ["quarter", "quarter", "nickel"]],
+            "parent": "G__144",
+            "return": ["quarter", "quarter", "nickel"],
+            "name": "omni-trace.testing-ns/calc-change-to-return*",
+            "start": 1637431413788,
+            "id": "G__150",
+            "end": 1637431413788,
+            "a0": 1242.5,
+            "r0": 1021.066666666667,
+            "a1": 1343.875,
+            "r1": 1164.9333333333334,
+            "depth": 7,
+            "children": 1
+          },
+          {
+            "args": [
+              {
+                "coins-inserted": ["quarter"],
+                "coins-returned": [],
+                "dispensed": null,
+                "inventory": {"a1": {"name": "taco", "qty": 10, "price": 0.85}},
+                "err-msg": null
+              },
+              "dime"
+            ],
+            "parent": "root",
+            "return": {
+              "coins-inserted": ["quarter", "dime"],
+              "coins-returned": [],
+              "dispensed": null,
+              "inventory": {"a1": {"name": "taco", "qty": 10, "price": 0.85}},
+              "err-msg": null
+            },
+            "name": "omni-trace.testing-ns/insert-coin",
+            "start": 1637431413788,
+            "id": "G__128",
+            "end": 1637431413788,
+            "a0": 208.75,
+            "r0": 145.86666666666667,
+            "a1": 310.125,
+            "r1": 289.73333333333335,
+            "depth": 1,
+            "children": 0
+          },
+          {
+            "args": [
+              {
+                "coins-inserted": [],
+                "coins-returned": ["quarter", "quarter", "nickel"],
+                "dispensed": {"name": "taco", "qty": 10, "price": 0.85},
+                "inventory": {"a1": {"name": "taco", "qty": 9, "price": 0.85}},
+                "err-msg": null
+              }
+            ],
+            "parent": "root",
+            "name": "omni-trace.testing-ns/retrieve-change-returned",
+            "start": 1637431413788,
+            "id": "G__152",
+            "thrown": {
+              "object": {
+                "meta": {
+                  "meta": null,
+                  "ba": 1,
+                  "root": {
+                    "Ha": {},
+                    "bitmap": 1073741824,
+                    "P": [
+                      {
+                        "Mb": "portal.runtime",
+                        "name": "id",
+                        "sa": "portal.runtime/id",
+                        "_hash": 1768418782,
+                        "T": 2153775105,
+                        "da": 4096
+                      },
+                      143,
+                      null,
+                      null,
+                      null,
+                      null,
+                      null,
+                      null
+                    ],
+                    "da": 131072,
+                    "T": 0
+                  },
+                  "Bb": false,
+                  "Db": null,
+                  "Y": null,
+                  "T": 16123663,
+                  "da": 139268
+                },
+                "ba": 5,
+                "root": {
+                  "Ha": {},
+                  "bitmap": 34607120,
+                  "P": [
+                    {
+                      "Mb": null,
+                      "name": "meta",
+                      "sa": "meta",
+                      "_hash": 1499536964,
+                      "T": 2153775105,
+                      "da": 4096
+                    },
+                    null,
+                    null,
+                    {
+                      "Ha": {},
+                      "bitmap": 4098,
+                      "P": [
+                        {
+                          "Mb": null,
+                          "name": "rep",
+                          "sa": "rep",
+                          "_hash": -1226820564,
+                          "T": 2153775105,
+                          "da": 4096
+                        },
+                        null,
+                        {
+                          "Mb": null,
+                          "name": "type",
+                          "sa": "type",
+                          "_hash": 1174270348,
+                          "T": 2153775105,
+                          "da": 4096
+                        },
+                        "#object[Error]",
+                        null,
+                        null,
+                        null,
+                        null
+                      ],
+                      "da": 131072,
+                      "T": 0
+                    },
+                    {
+                      "Mb": null,
+                      "name": "id",
+                      "sa": "id",
+                      "_hash": -1388402092,
+                      "T": 2153775105,
+                      "da": 4096
+                    },
+                    142,
+                    {
+                      "Mb": null,
+                      "name": "tag",
+                      "sa": "tag",
+                      "_hash": -1290361223,
+                      "T": 2153775105,
+                      "da": 4096
+                    },
+                    {
+                      "Mb": null,
+                      "name": "object",
+                      "sa": "object",
+                      "_hash": null,
+                      "T": 2153775105,
+                      "da": 4096
+                    }
+                  ],
+                  "da": 131072,
+                  "T": 0
+                },
+                "Bb": false,
+                "Db": null,
+                "Y": null,
+                "T": 16123663,
+                "da": 139268
+              },
+              "T": 393216,
+              "da": 0,
+              "closure_uid_767065991": 29
+            },
+            "end": 1637431413789,
+            "a0": 312.125,
+            "r0": 145.86666666666667,
+            "a1": 413.5,
+            "r1": 289.73333333333335,
+            "depth": 1,
+            "children": 0
+          },
+          {
+            "args": [
+              {
+                "coins-inserted": ["quarter", "dime", "nickel", "penny"],
+                "coins-returned": [],
+                "dispensed": null,
+                "inventory": {"a1": {"name": "taco", "qty": 10, "price": 0.85}},
+                "err-msg": null
+              },
+              "a1"
+            ],
+            "parent": "G__135",
+            "return": {"name": "taco", "qty": 10, "price": 0.85},
+            "name": "omni-trace.testing-ns/get-selection",
+            "start": 1637431413788,
+            "id": "G__136",
+            "end": 1637431413788,
+            "a0": 725.625,
+            "r0": 437.6000000000001,
+            "a1": 827,
+            "r1": 581.4666666666667,
+            "depth": 3,
+            "children": 0
+          },
+          {
+            "args": [
+              {
+                "coins-inserted": ["quarter", "dime"],
+                "coins-returned": [],
+                "dispensed": null,
+                "inventory": {"a1": {"name": "taco", "qty": 10, "price": 0.85}},
+                "err-msg": null
+              },
+              "nickel"
+            ],
+            "parent": "root",
+            "return": {
+              "coins-inserted": ["quarter", "dime", "nickel"],
+              "coins-returned": [],
+              "dispensed": null,
+              "inventory": {"a1": {"name": "taco", "qty": 10, "price": 0.85}},
+              "err-msg": null
+            },
+            "name": "omni-trace.testing-ns/insert-coin",
+            "start": 1637431413788,
+            "id": "G__129",
+            "end": 1637431413788,
+            "a0": 415.5,
+            "r0": 145.86666666666667,
+            "a1": 516.875,
+            "r1": 289.73333333333335,
+            "depth": 1,
+            "children": 0
+          },
+          {
+            "args": [0.55, ["quarter", "quarter", "quarter"]],
+            "parent": "G__144",
+            "return": null,
+            "name": "omni-trace.testing-ns/calc-change-to-return*",
+            "start": 1637431413788,
+            "id": "G__146",
+            "end": 1637431413788,
+            "a0": 1345.875,
+            "r0": 1021.066666666667,
+            "a1": 1447.25,
+            "r1": 1164.9333333333334,
+            "depth": 7,
+            "children": 1
+          },
+          {
+            "args": [
+              {
+                "coins-inserted": ["quarter", "dime", "nickel", "penny"],
+                "coins-returned": [],
+                "dispensed": null,
+                "inventory": {"a1": {"name": "taco", "qty": 10, "price": 0.85}},
+                "err-msg": null
+              },
+              "a1"
+            ],
+            "parent": "root",
+            "return": {
+              "coins-inserted": [],
+              "coins-returned": ["quarter", "quarter", "nickel"],
+              "dispensed": {"name": "taco", "qty": 10, "price": 0.85},
+              "inventory": {"a1": {"name": "taco", "qty": 9, "price": 0.85}},
+              "err-msg": null
+            },
+            "name": "omni-trace.testing-ns/press-button",
+            "start": 1637431413788,
+            "id": "G__131",
+            "end": 1637431413788,
+            "a0": 518.875,
+            "r0": 145.86666666666667,
+            "a1": 1654,
+            "r1": 289.73333333333335,
+            "depth": 1,
+            "children": 2
+          },
+          {
+            "args": [
+              {
+                "coins-inserted": ["quarter", "dime", "nickel", "penny"],
+                "coins-returned": [],
+                "dispensed": null,
+                "inventory": {"a1": {"name": "taco", "qty": 10, "price": 0.85}},
+                "err-msg": null
+              },
+              "a1"
+            ],
+            "parent": "G__131",
+            "return": {
+              "coins-inserted": [],
+              "coins-returned": ["quarter", "quarter", "nickel"],
+              "dispensed": {"name": "taco", "qty": 10, "price": 0.85},
+              "inventory": {"a1": {"name": "taco", "qty": 9, "price": 0.85}},
+              "err-msg": null
+            },
+            "name": "omni-trace.testing-ns/process-transaction",
+            "start": 1637431413788,
+            "id": "G__135",
+            "end": 1637431413788,
+            "a0": 725.625,
+            "r0": 291.73333333333335,
+            "a1": 1654,
+            "r1": 435.6000000000001,
+            "depth": 2,
+            "children": 2
+          },
+          {
+            "args": [0.5499999999999999],
+            "parent": "G__137",
+            "return": 0.55,
+            "name": "omni-trace.testing-ns/round-to-pennies",
+            "start": 1637431413788,
+            "id": "G__139",
+            "end": 1637431413788,
+            "a0": 829,
+            "r0": 583.4666666666667,
+            "a1": 930.375,
+            "r1": 727.3333333333335,
+            "depth": 4,
+            "children": 0
+          },
+          {
+            "args": [
+              {
+                "coins-inserted": ["quarter", "dime", "nickel", "penny"],
+                "coins-returned": [],
+                "dispensed": null,
+                "inventory": {"a1": {"name": "taco", "qty": 10, "price": 0.85}},
+                "err-msg": null
+              },
+              "a1"
+            ],
+            "parent": "G__131",
+            "return": true,
+            "name": "omni-trace.testing-ns/valid-selection",
+            "start": 1637431413788,
+            "id": "G__132",
+            "end": 1637431413788,
+            "a0": 518.875,
+            "r0": 291.73333333333335,
+            "a1": 723.625,
+            "r1": 435.6000000000001,
+            "depth": 2,
+            "children": 2
+          },
+          {
+            "args": [["quarter", "quarter"]],
+            "parent": "G__144",
+            "return": 0.5,
+            "name": "omni-trace.testing-ns/calc-coin-value",
+            "start": 1637431413788,
+            "id": "G__145",
+            "end": 1637431413788,
+            "a0": 1449.25,
+            "r0": 1021.066666666667,
+            "a1": 1550.625,
+            "r1": 1164.9333333333334,
+            "depth": 7,
+            "children": 0
+          },
+          {
+            "args": [["quarter", "quarter", "dime"]],
+            "parent": "G__148",
+            "return": 0.6,
+            "name": "omni-trace.testing-ns/calc-coin-value",
+            "start": 1637431413788,
+            "id": "G__149",
+            "end": 1637431413788,
+            "a0": 1552.625,
+            "r0": 1166.9333333333334,
+            "a1": 1654,
+            "r1": 1310.8000000000002,
+            "depth": 8,
+            "children": 0
+          },
+          {
+            "args": [0.55, ["quarter"]],
+            "parent": "G__140",
+            "return": ["quarter", "quarter", "nickel"],
+            "name": "omni-trace.testing-ns/calc-change-to-return*",
+            "start": 1637431413788,
+            "id": "G__142",
+            "end": 1637431413788,
+            "a0": 1139.125,
+            "r0": 729.3333333333335,
+            "a1": 1654,
+            "r1": 873.2000000000002,
+            "depth": 5,
+            "children": 2
+          },
+          {
+            "args": [["quarter", "quarter", "quarter"]],
+            "parent": "G__146",
+            "return": 0.75,
+            "name": "omni-trace.testing-ns/calc-coin-value",
+            "start": 1637431413788,
+            "id": "G__147",
+            "end": 1637431413788,
+            "a0": 1345.875,
+            "r0": 1166.9333333333334,
+            "a1": 1447.25,
+            "r1": 1310.8000000000002,
+            "depth": 8,
+            "children": 0
+          },
+          {
+            "args": [0.55, ["quarter", "quarter", "dime"]],
+            "parent": "G__144",
+            "return": null,
+            "name": "omni-trace.testing-ns/calc-change-to-return*",
+            "start": 1637431413788,
+            "id": "G__148",
+            "end": 1637431413788,
+            "a0": 1552.625,
+            "r0": 1021.066666666667,
+            "a1": 1654,
+            "r1": 1164.9333333333334,
+            "depth": 7,
+            "children": 1
+          },
+          {
+            "args": [0.55, ["quarter", "quarter"]],
+            "parent": "G__142",
+            "return": ["quarter", "quarter", "nickel"],
+            "name": "omni-trace.testing-ns/calc-change-to-return*",
+            "start": 1637431413788,
+            "id": "G__144",
+            "end": 1637431413788,
+            "a0": 1242.5,
+            "r0": 875.2000000000002,
+            "a1": 1654,
+            "r1": 1019.066666666667,
+            "depth": 6,
+            "children": 4
+          },
+          {
+            "args": [[]],
+            "parent": "G__140",
+            "return": 0,
+            "name": "omni-trace.testing-ns/calc-coin-value",
+            "start": 1637431413788,
+            "id": "G__141",
+            "end": 1637431413788,
+            "a0": 1035.75,
+            "r0": 729.3333333333335,
+            "a1": 1137.125,
+            "r1": 873.2000000000002,
+            "depth": 5,
+            "children": 0
+          },
+          {
+            "args": [0.55, []],
+            "parent": "G__137",
+            "return": ["quarter", "quarter", "nickel"],
+            "name": "omni-trace.testing-ns/calc-change-to-return*",
+            "start": 1637431413788,
+            "id": "G__140",
+            "end": 1637431413788,
+            "a0": 1035.75,
+            "r0": 583.4666666666667,
+            "a1": 1654,
+            "r1": 727.3333333333335,
+            "depth": 4,
+            "children": 2
+          },
+          {
+            "args": [["quarter", "dime", "nickel", "penny"]],
+            "parent": "G__132",
+            "return": 1.4,
+            "name": "omni-trace.testing-ns/calc-coin-value",
+            "start": 1637431413788,
+            "id": "G__134",
+            "end": 1637431413788,
+            "a0": 622.25,
+            "r0": 437.6000000000001,
+            "a1": 723.625,
+            "r1": 581.4666666666667,
+            "depth": 3,
+            "children": 0
+          },
+          {
+            "args": [["quarter", "dime", "nickel", "penny"]],
+            "parent": "G__137",
+            "return": 1.4,
+            "name": "omni-trace.testing-ns/calc-coin-value",
+            "start": 1637431413788,
+            "id": "G__138",
+            "end": 1637431413788,
+            "a0": 932.375,
+            "r0": 583.4666666666667,
+            "a1": 1033.75,
+            "r1": 727.3333333333335,
+            "depth": 4,
+            "children": 0
+          }
+        ]
+      },
+      {
+        "name": "tree-ancestors",
+        "source": "tree",
+        "transform": [
+          {
+            "type": "formula",
+            "expr": "treeAncestors('tree', datum.id, 'root')",
+            "as": "treeAncestors"
+          }
+        ]
+      },
+      {
+        "name": "tree-ancestors-flatt",
+        "source": "tree-ancestors",
+        "transform": [{"type": "flatten", "fields": ["treeAncestors"]}]
+      },
+      {
+        "name": "selected-ancestors",
+        "source": "tree-ancestors",
+        "transform": [
+          {"type": "filter", "expr": "indata('selected', 'value', datum.id)"}
+        ]
+      },
+      {
+        "name": "selected-ancestors-flat",
+        "source": "selected-ancestors",
+        "transform": [{"type": "flatten", "fields": ["treeAncestors"]}]
+      },
+      {
+        "name": "filtered",
+        "source": "tree-ancestors-flatt",
+        "transform": [
+          {
+            "type": "filter",
+            "expr": "!length(data('selected')) || datum.parent == null || indata('selected', 'value', datum.treeAncestors.id)"
+          }
+        ]
+      },
+      {
+        "name": "filtered-aggregate",
+        "source": "filtered",
+        "transform": [{"type": "aggregate", "groupby": ["id"]}]
+      },
+      {
+        "name": "filterd-tree",
+        "source": "tree",
+        "transform": [
+          {
+            "type": "filter",
+            "expr": "!length(data('selected'))|| indata('filtered-aggregate', 'id', datum.id) || indata('selected-ancestors-flat', 'treeAncestors.id', datum.id)"
+          }
+        ]
+      },
+      
+      {
+        "name": "filter-tree",
+        "source": "filterd-tree",
+        "transform": [
+          {"key": "id", "parentKey": "parent", "type": "stratify"},
+          {
+            "as": ["a0", "r0", "a1", "r1", "depth", "children"],
+            "type": "partition",
+            "size": [{"signal": "width"}, {"signal": "height"}],
+            "padding": 2,
+            "sort": {"field": "id"}
+          }
+        ]
+      }
+    ]
+  }
