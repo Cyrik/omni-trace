@@ -146,7 +146,7 @@
      `(instrument-fn ~sym {::workspace workspace}))
     ([sym opts]
      (macros/case :clj `(clj-instrument-fn ~sym ~opts instrumented)
-                  :cljs `(cljs-instrument-ns ~sym ~opts))))
+                  :cljs `(cljs-instrument-fn ~sym ~opts))))
   
   (defmacro instrument-ns
     ([sym-or-syms]
