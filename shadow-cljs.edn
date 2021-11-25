@@ -6,6 +6,9 @@
 ;;  :deps-aliases [:cider]
 ;;  :deps true
 
+ :open-file-command
+ ["code" :pwd "--goto" ["%s:%s:%s" :file :line :column]]
+
  :dev-http {8280 "resources/public"}
  :build-defaults
  {:compiler-options {:infer-externs :auto}}
@@ -16,6 +19,7 @@
                            :devtools   {:preloads    [#_devtools.preload
                                                       #_user]
                                         :after-load portal.ui.core/reload!
+                                        :hud #{:errors :warnings :progress}
                                         :repl-pprint true}
                            :dev        {:compiler-options {:infer-externs :auto}}
                            :release    {:compiler-options {:warnings-as-errors #{:undeclared-var}

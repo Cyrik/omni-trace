@@ -1,6 +1,7 @@
 (ns omni-trace.omni-trace
-  (:require #?(:clj [net.cgrand.macrovich :as macros]
-               )
+  (:require #?(:clj [net.cgrand.macrovich :as macros])
+            #?(:clj [cljs.analyzer :as analyzer])
+            #?(:clj [clojure.java.io :as io])
             [cljs.analyzer.api :as ana])
             
   #?(:cljs (:require-macros [net.cgrand.macrovich :as macros]
@@ -31,7 +32,7 @@
     (swap! workspace assoc-in [:log id] trace)
     (swap! workspace assoc :max-callsites (callsite trace))))
 
-(defn trace-fn-call [name f args opts]
+(defn trace-fn-call [name f args file opts]
   (let [parent (or *trace-log-parent*
                    {:workspace (::workspace opts) :parent :root})
         call-id (keyword (gensym ""))
@@ -43,24 +44,24 @@
                 (catch #?(:clj Throwable :cljs :default) t
                   (log (:workspace parent)
                        call-id
-                       {:id call-id :name name :args args :start before-time :end (now) :parent (:parent parent) :thrown (#?(:clj Throwable->map :cljs identity) t)}
+                       {:id call-id :file file :name name :args args :start before-time :end (now) :parent (:parent parent) :thrown (#?(:clj Throwable->map :cljs identity) t)}
                        opts)
                   (throw t))))]
     (log (:workspace parent) 
          call-id
-         {:id call-id :name name :args args :start before-time :end (now) :parent (:parent parent) :return res}
+         {:id call-id :file file :name name :args args :start before-time :end (now) :parent (:parent parent) :return res}
          opts)
     res))
 
-(defn instrumented [sym v opts]
+(defn instrumented [sym v file opts]
   (let [to-wrap @v]
     (when (fn? to-wrap)
       (let [instrumented (fn [& args]
-                           (trace-fn-call sym to-wrap args opts))]
+                           (trace-fn-call sym to-wrap args file opts))]
         (swap! instrumented-vars assoc v {:orig to-wrap :instrumented instrumented})
         instrumented))))
 
-(defn uninstrumented [sym v opts]
+(defn uninstrumented [sym v file opts]
   (when-let [wrapped (@instrumented-vars v)]
     (swap! instrumented-vars dissoc v)
     (:orig wrapped)))
@@ -76,62 +77,59 @@
  (defn ->sym [v]
    (let [meta (meta v)]
      (symbol (name (ns-name (:ns meta))) (name (:name meta)))))
- 
+
  (defn vars-in-ns-clj [sym]
    (if (find-ns sym)
      (for [[_ v] (ns-interns sym)
            :when (not (:macro (meta v)))]
        (->sym v))
      []))
- 
-  (defmacro cljs-instrument-fn [[_ sym] opts]
+
+  #?(:clj
+     (defn get-file [env file]
+       (if (:ns env) ;; cljs target
+         (if (= file "repl-input.cljs")
+           (get-in env [:ns :meta :file])
+           (if-let [classpath-file (io/resource file)]
+             (.getPath (io/file classpath-file))
+             file))
+         *file*)))
+
+  (defmacro cljs-instrument-fn [[_ sym] opts instrumenter]
     (when-let [v (ana/resolve &env sym)]
-      (let [var-name (:name v)]
-        `(when-let [instrumented# (instrumented '~sym (var ~sym) ~opts)]
-          ;;  (alter-meta! ~v assoc-in [:omni] "yeah")
-          ;;  (vary-meta ~v assoc-in [:omni] "yeah")
-          ;;  (alter-meta! (var ~sym) assoc-in [:omni] "yeah123")
+      (let [var-name (:name v)
+            file #?(:clj (get-file &env (:file (:meta v))) :cljs nil)]
+        `(when-let [instrumented# (~instrumenter '~sym (var ~sym) ~file ~opts)]
+
+
            (set! ~sym instrumented#)
-          ;;  (alter-meta! (var ~sym) assoc-in [:omni2] "yeah2")
-          ;;  (alter-meta! ~v assoc-in [:omni2] "yeah123")
            '~var-name))))
 
-  (defmacro cljs-uninstrument-fn [[_ sym] opts]
-    (when-let [v (ana/resolve &env sym)]
-      (let [var-name (:name v)]
-        `(when-let [uninstrumented# (uninstrumented '~sym (var ~sym) ~opts)]
-           (set! ~sym uninstrumented#)
-           '~var-name))))
-  
   (defmacro cljs-instrument-ns [ns-sym opts]
     `(doseq [f# ~(->> ns-sym
                       eval
                       vars-in-ns
                       (filter symbol?)
                       (distinct)
-                      (mapv (fn [sym] `#(cljs-instrument-fn '~sym ~opts))))]
+                      (mapv (fn [sym] `#(cljs-instrument-fn '~sym ~opts instrumented))))]
        (f#)))
-  
+
   (defmacro cljs-uninstrument-ns [ns-sym opts]
     `(doseq [f# ~(->> ns-sym
                       eval
                       vars-in-ns
                       (filter symbol?)
                       (distinct)
-                      (mapv (fn [sym] `#(cljs-uninstrument-fn '~sym ~opts))))]
+                      (mapv (fn [sym] `#(cljs-instrument-fn '~sym ~opts uninstrumented))))]
        (f#)))
-  
-  
 
-  (defn clj-instrument-fn [sym opts instrumenter]
-    (when-let [v (resolve sym)]
-      (let [var-name (->sym v)]
-        (when-let [instrumented-fn (instrumenter var-name v opts)]
-          #?(:clj (alter-var-root v (constantly instrumented-fn)))
-          var-name))))
-
-
-
+  #?(:clj
+     (defn clj-instrument-fn [sym opts instrumenter]
+       (when-let [v (resolve sym)]
+         (let [var-name (->sym v)]
+           (when-let [instrumented-fn (instrumenter var-name v *file* opts)]
+             (alter-var-root v (constantly instrumented-fn))
+             var-name)))))
 
   (defn clj-instrument-ns [ns-sym opts mapper instrumenter]
     (->> ns-sym
@@ -140,21 +138,21 @@
          (distinct)
          (mapv (fn [sym] (mapper sym opts instrumenter)))
          (remove nil?)))
-  
+
   (defmacro instrument-fn
     ([sym]
      `(instrument-fn ~sym {::workspace workspace}))
     ([sym opts]
      (macros/case :clj `(clj-instrument-fn ~sym ~opts instrumented)
-                  :cljs `(cljs-instrument-fn ~sym ~opts))))
-  
+                  :cljs `(cljs-instrument-fn ~sym ~opts instrumented))))
+
   (defmacro instrument-ns
     ([sym-or-syms]
      `(instrument-ns ~sym-or-syms {::workspace workspace}))
     ([sym-or-syms opts]
      (macros/case :clj `(clj-instrument-ns ~sym-or-syms ~opts clj-instrument-fn instrumented)
                   :cljs `(cljs-instrument-ns ~sym-or-syms ~opts))))
-  
+
   (defmacro uninstrument-ns
     "removes instrumentation"
     ([sym-or-syms]
