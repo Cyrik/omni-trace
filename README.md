@@ -47,7 +47,7 @@ or just through github source:
   (o/uninstrument-ns 'omni-trace.testing-ns))
 ```
 
-![Screenshot](docs/flamegraph.png)
+![Screenshot](docs/demo.gif)
 
 ## Features
 - Works in clojure and clojurescript

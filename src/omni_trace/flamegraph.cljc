@@ -79,10 +79,10 @@
      {:enter
       {:tooltip
        {:signal
-        "{n: datum.name,
-         a:datum.args,
-         t:datum.thrown,
-         r: datum.return}"}}
+        "{name: datum.name,
+         args: datum.args,
+         throw: datum.thrown,
+         return: datum.return}"}}
       :update
             {:x {:scale "xscale" :field "a0"}
        :x2 {:scale "xscale" :field "a1"}
@@ -106,7 +106,7 @@
        :fill {:value "white"}
        :text {:field "name"}}
       :update
-      {:fontSize {:signal "size * 1.2 * (datum.a1 - datum.a0)"}
+      {:fontSize {:signal "size * 3.0 * (datum.a1 - datum.a0)"}
        :x {:scale "xscale" :signal "0.5 * (datum.a0 + datum.a1)"}
        :y {:scale "yscale" :signal "0.5 * (datum.r0 + datum.r1)"}}}}]
    :$schema
