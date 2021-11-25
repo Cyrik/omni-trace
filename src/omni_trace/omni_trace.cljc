@@ -91,7 +91,7 @@
          (if (= file "repl-input.cljs")
            (get-in env [:ns :meta :file])
            (if-let [classpath-file (io/resource file)]
-             (.getPath (io/file classpath-file))
+             (.getPath classpath-file)
              file))
          *file*)))
 

@@ -12,6 +12,7 @@
                    :main-opts ["-M" "clj-check.check"]}
            :dev {:extra-paths ["dev"]
                  :extra-deps {criterium/criterium {:mvn/version "0.4.6"}
+                              net.clojars.cyrik/cljs-macroexpand {:mvn/version "0.1.1"}
                               djblue/portal {:mvn/version "0.18.0"}}}
            :shadow-cljs
            {:extra-deps {thheller/shadow-cljs {:mvn/version "2.15.5"}}}
