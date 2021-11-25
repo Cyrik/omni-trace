@@ -1,4 +1,4 @@
-(ns omni-trace.flamegraph)
+(ns cyrik.omni-trace.graph)
 
 (defn flamedata [worksapce]
   (into [] (conj (vals (:log worksapce)) {:parent nil :name "root" :id :root})))

@@ -1,11 +1,11 @@
-(ns omni-trace.omni-trace
+(ns cyrik.omni-trace
   (:require #?(:clj [net.cgrand.macrovich :as macros])
-            #?(:clj [cljs.analyzer :as analyzer])
             #?(:clj [clojure.java.io :as io])
-            [cljs.analyzer.api :as ana])
+            [cljs.analyzer.api :as ana]
+            [cyrik.omni-trace.graph :as flame])
             
   #?(:cljs (:require-macros [net.cgrand.macrovich :as macros]
-                            [omni-trace.omni-trace :refer [instrument-ns uninstrument-ns]])))
+                            [cyrik.omni-trace :refer [instrument-ns uninstrument-ns]])))
 
 (defonce instrumented-vars (atom {}))
 (def ^:dynamic *trace-log-parent* nil)
@@ -162,8 +162,11 @@
                   :cljs `(cljs-uninstrument-ns ~sym-or-syms ~opts)))))
   
 
-(defn init [& args]
-  (print "yeah"))
+(defn flamegraph 
+  ([]
+   (flamegraph workspace))
+  ([workspace]
+   (flame/flamegraph (flame/flamedata @workspace))))
 
 (comment
 

@@ -1,7 +1,8 @@
 # omni-trace
 Omnipotent/omniscient tracing core for debugging clojure(script)
 
-very early alpha, api is still unstable but its only for dev time so there shouldn't be any problems
+very early alpha, api is still unstable but its only for dev time so there shouldn't be any problems.
+moved namespaces to cyrik.omni-trace and below. cyrik.omni-trace is the main entry point.
 
 
 [![Clojars Project](https://img.shields.io/clojars/v/org.clojars.cyrik/omni-trace.svg)](https://clojars.org/org.clojars.cyrik/omni-trace)
@@ -17,11 +18,13 @@ or just through github source:
 
 ## Usage
 
+[contrived example](https://github.com/bpiel/contrived-example) code for demo debugging pupose
+
 ```clojure
 (ns user
-  (:require [omni-trace.omni-trace :as o]
-            [omni-trace.testing-ns :as e]
-            [omni-trace.flamegraph :as flame]
+  (:require [cyrik.omni-trace :as o]
+            [cyrik.omni-trace.testing-ns :as e]
+            [cyrik.omni-trace.flamegraph :as flame]
             [portal.web :as p]))
 
 
@@ -35,7 +38,7 @@ or just through github source:
       (e/insert-coin :nickel)
       (e/insert-coin :penny)
       (e/press-button :a1)
-      (e/retrieve-change-returned))
+      (e/retrieve-change-returned)) ;throws on purpose for demonstration
   ;look at traces for every function that was traced
   @o/workspace
   ;connect to portal

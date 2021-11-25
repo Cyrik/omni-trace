@@ -15,7 +15,7 @@
  :builds   {:app          {:target     :browser
                            :output-dir "resources/public/js/compiled"
                            :asset-path "/js/compiled"
-                           :modules    {:app {:init-fn omni-trace.omni-trace/init}}
+                           :modules    {:app {:entries [cyrik.omni-trace]}}
                            :devtools   {:preloads    [#_devtools.preload
                                                       #_user]
                                         :after-load portal.ui.core/reload!

@@ -1,4 +1,4 @@
-(ns omni-trace.testing-ns)
+(ns cyrik.omni-trace.testing-ns)
 
 (def coin-values
   {:quarter 0.25

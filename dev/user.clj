@@ -1,13 +1,13 @@
 (ns user
-  (:require [omni-trace.omni-trace :as o]
-            [omni-trace.testing-ns :as e]
+  (:require [cyrik.omni-trace :as o]
+            [cyrik.omni-trace.testing-ns :as e]
             [clojure.java.io :as io]
             [portal.api :as po]
             [criterium.core :as crit]
             [clojure.walk :as walk]
             [test-console :as tc]
             [clojure.pprint :as pprint]
-            [omni-trace.flamegraph :as flame]))
+            [cyrik.omni-trace.graph :as flame]))
 
 (defn spit-pretty!
   "Writes the pretty-printed edn `data` into the `file`."
@@ -30,15 +30,15 @@
 
   (o/instrument-fn 'test-inc)
   (mapv test-inc (range 1000))
-  (o/instrument-ns 'omni-trace.testing-ns
-                   {::o/workspace omni-trace.omni-trace/workspace})
+  (o/instrument-ns 'cyrik.omni-trace.testing-ns
+                   {::o/workspace o/workspace})
   (-> e/machine-init
       (e/insert-coin :quarter)
       (e/insert-coin :dime)
       (e/insert-coin :nickel)
       (e/insert-coin :penny)
       (e/press-button :a1))
-  (tap> (flame/flamegraph (flame/flamedata @o/workspace)))
+  (tap> (o/flamegraph o/workspace))
   (meta #'e/insert-coin)
 
 
@@ -62,7 +62,7 @@
   (crit/with-progress-reporting (crit/quick-bench (into {} (map (juxt :id identity)) values) :verbose))
   (crit/with-progress-reporting (crit/quick-bench (zipmap (map :id values) values) :verbose))
 
-  
+
   (count (:log @o/workspace))
   (o/reset-workspace!)
   (intern *ns* '~'symname "<<symdefinition>>")

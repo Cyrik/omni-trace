@@ -1,10 +1,11 @@
 (ns user
-  (:require [omni-trace.omni-trace :as o]
-            [omni-trace.testing-ns :as e]
+  (:require [cyrik.omni-trace :as o]
+            [cyrik.omni-trace.testing-ns :as e]
             [cyrik.cljs-macroexpand :as macro]
+            [cyrik.omni-trace.testing-ns :as testin-ns]
             [portal.console :as console]
             [test-console :as tc]
-            [omni-trace.flamegraph :as flame]
+            [cyrik.omni-trace.graph :as flame]
             [portal.web :as p]))
 
 (defn test-inc [x]
@@ -24,11 +25,12 @@
 
 (test-log 1)
 
-
+(defonce portal (p/open))
+(add-tap #'p/submit)
 
 (comment
   ;instrument a namespace
-  (o/instrument-ns 'omni-trace.testing-ns)
+  (o/instrument-ns 'cyrik.omni-trace.testing-ns)
   ;or instrument a single function
   (o/instrument-fn 'test-inc)
   (test-inc 5)
@@ -43,8 +45,7 @@
   ;look at traces for every function that was traced
   @o/workspace
   ;connect to portal
-  (def portal (p/open))
-  (add-tap #'p/submit)
+
   (add-tap print)
   ;send the trace to portal as a vegajs flamegraph
   (tap> (flame/flamegraph (flame/flamedata @o/workspace)))
@@ -54,14 +55,14 @@
   (o/uninstrument-ns 'omni-trace.testing-ns)
   (o/reset-workspace!)
   o/instrumented-vars
-  (macroexpand '(o/instrument-ns 'omni-trace.testing-ns))
+  (macroexpand '(o/instrument-ns 'cyrik.omni-trace.testing-ns))
   (macroexpand '(o/instrument-fn 'omni-trace.testing-ns/insert-coin))
   (macro/cljs-macroexpand-all '(o/instrument-ns 'portal.web))
   (macro/cljs-macroexpand-all '(o/instrument-fn 'omni-trace.testing-ns/insert-coin))
   (test-log 5)
   (macro/cljs-macroexpand-all '(tc/log 5))
-  (alter-meta! (var omni-trace.testing-ns/insert-coin) assoc-in [:stuffs] "yeah123")
-  (.log js/console (meta (var omni-trace.testing-ns/insert-coin)))
+  (alter-meta! (var cyrik.omni-trace.testing-ns/insert-coin) assoc-in [:stuffs] "yeah123")
+  (.log js/console (meta (var cyrik.omni-trace.testing-ns/insert-coin)))
 
   (when-let [open js/OpenFileInEditor] (open "some/file.cljs" 10 1))
   (.log js/console (throw (js/Error. "Oops")))
