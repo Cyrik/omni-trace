@@ -2,8 +2,8 @@
   (:require [cyrik.omni-trace :as o]
             [cyrik.omni-trace.testing-ns :as e]
             [cyrik.cljs-macroexpand :as macro]
-            [cyrik.omni-trace.testing-ns :as testin-ns]
             [portal.console :as console]
+            [cyrik.omni-trace.instrument :as i]
             [test-console :as tc]
             [cyrik.omni-trace.graph :as flame]
             [portal.web :as p]))
@@ -32,7 +32,7 @@
   ;instrument a namespace
   (o/instrument-ns 'cyrik.omni-trace.testing-ns)
   ;or instrument a single function
-  (o/instrument-fn 'test-inc)
+  (o/instrument-fn 'user/test-inc)
   (test-inc 5)
   ;run functions in that namespace
   (-> e/machine-init
@@ -41,24 +41,24 @@
       (e/insert-coin :nickel)
       (e/insert-coin :penny)
       (e/press-button :a1)
-      (e/retrieve-change-returned))
+      (e/retrieve-change-returned)) ;; this is supposed to throw to show exception handling in omni-trace
   ;look at traces for every function that was traced
-  @o/workspace
+  @i/workspace
   ;connect to portal
 
   (add-tap print)
   ;send the trace to portal as a vegajs flamegraph
-  (tap> (flame/flamegraph (flame/flamedata @o/workspace)))
+  (tap> (flame/flamegraph (flame/flamedata @i/workspace)))
   (tap> ^{:portal.viewer/default :portal.viewer/hiccup} [:button {:onclick (str "alert('123')")} (str "alert('123')")])
   [:button {:onclick "alert('123')"} "Test it!"]
   ;remove tracing from a namesapce
   (o/uninstrument-ns 'omni-trace.testing-ns)
   (o/reset-workspace!)
-  o/instrumented-vars
+  i/instrumented-vars
   (macroexpand '(o/instrument-ns 'cyrik.omni-trace.testing-ns))
-  (macroexpand '(o/instrument-fn 'omni-trace.testing-ns/insert-coin))
+  (macroexpand '(o/instrument-fn 'cyrik.omni-trace.testing-ns/insert-coin))
   (macro/cljs-macroexpand-all '(o/instrument-ns 'portal.web))
-  (macro/cljs-macroexpand-all '(o/instrument-fn 'omni-trace.testing-ns/insert-coin))
+  (macro/cljs-macroexpand-all '(o/instrument-fn 'cyrik.omni-trace.testing-ns/insert-coin))
   (test-log 5)
   (macro/cljs-macroexpand-all '(tc/log 5))
   (alter-meta! (var cyrik.omni-trace.testing-ns/insert-coin) assoc-in [:stuffs] "yeah123")

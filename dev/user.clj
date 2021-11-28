@@ -1,8 +1,9 @@
 (ns user
   (:require [cyrik.omni-trace :as o]
             [cyrik.omni-trace.testing-ns :as e]
+            [cyrik.omni-trace.instrument :as i]
             [clojure.java.io :as io]
-            [portal.api :as po]
+            [portal.api :as p]
             [criterium.core :as crit]
             [clojure.walk :as walk]
             [test-console :as tc]
@@ -24,33 +25,34 @@
   (tc/log x)
   (inc x))
 (test-log 5)
-(defonce portal (po/open))
-(add-tap #'po/submit)
+(defonce portal (p/open))
+(add-tap #'p/submit)
 (comment
 
-  (o/instrument-fn 'test-inc)
+  (o/instrument-fn 'user/test-inc)
+  (o/instrument-fn 'cyrik.omni-trace.testing-ns/run-machine)
+  (test-inc 123)
   (mapv test-inc (range 1000))
   (o/instrument-ns 'cyrik.omni-trace.testing-ns
-                   {::o/workspace o/workspace})
-  (-> e/machine-init
-      (e/insert-coin :quarter)
-      (e/insert-coin :dime)
-      (e/insert-coin :nickel)
-      (e/insert-coin :penny)
-      (e/press-button :a1))
-  (tap> (o/flamegraph o/workspace))
-  (meta #'e/insert-coin)
+                   {::o/workspace i/workspace})
+
+  (e/run-machine)
+  (o/run-traced 'cyrik.omni-trace.testing-ns/run-machine)
+  (tap> (flame/flamedata @i/workspace 'cyrik.omni-trace.testing-ns/run-machine))
+  (tap> (o/rooted-flamegraph 'cyrik.omni-trace.testing-ns/run-machine))
+  (tap> (o/flamegraph i/workspace))
 
 
-  o/instrumented-vars
+  i/instrumented-vars
 
   (tap> ^{:portal.viewer/default :portal.viewer/hiccup}
    [:div "custom thing here" [:portal.viewer/inspector {:complex :data-structure}]])
 
   (o/uninstrument-ns 'omni-trace.testing-ns)
+  (o/uninstrument-fn 'user/test-inc)
   (walk/macroexpand-all '(o/instrument-ns 'omni-trace.testing-ns))
 
-  (def values (vals (:log @o/workspace)))
+  (def values (vals (:log @i/workspace)))
 
   (crit/with-progress-reporting (crit/quick-bench (reduce (fn [acc {:keys [id] :as user}]
                                                             (into acc {id user})) {} values) :verbose))
@@ -63,7 +65,7 @@
   (crit/with-progress-reporting (crit/quick-bench (zipmap (map :id values) values) :verbose))
 
 
-  (count (:log @o/workspace))
+  (count (:log @i/workspace))
   (o/reset-workspace!)
   (intern *ns* '~'symname "<<symdefinition>>")
   .

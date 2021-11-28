@@ -1,7 +1,12 @@
 (ns cyrik.omni-trace.graph)
 
-(defn flamedata [worksapce]
-  (into [] (conj (vals (:log worksapce)) {:parent nil :name "root" :id :root})))
+(defn flamedata 
+  ([workspace]
+   (into [] (conj (vals (:log workspace)) {:parent nil :name "root" :id :root})))
+  ([workspace root]
+   (->> (vals (:log workspace))
+        (map #(if (= (:name %) root) (assoc % :parent nil) %))
+        (filter #(not= (:parent %) :root)))))
 
 (defn flamegraph-with-click [data]
   {:title "flame"
@@ -10,7 +15,7 @@
    :scales
    [{:name "color"
      :type "ordinal"
-     :domain {:data "filter-tree", :field "depth"}
+     :domain {:data "tree", :field "name"}
      :range {:scheme "tableau20"}}
     {:name "xscale", :zero false, :domain {:signal "xdom"}, :range {:signal "xrange"}}
     {:name "yscale", :zero false, :domain {:signal "ydom"}, :range {:signal "yrange"}}]
@@ -88,7 +93,7 @@
        :x2 {:scale "xscale" :field "a1"}
        :y {:scale "yscale" :field "r0"}
        :y2 {:scale "yscale" :field "r1"}
-       :fill {:scale "color", :field "depth"}
+       :fill {:scale "color", :field "name"}
        :stroke {:value "white"}
        :strokeWidth {:value 0.1}}
       :hover

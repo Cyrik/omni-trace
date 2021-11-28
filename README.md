@@ -52,6 +52,22 @@ or just through github source:
 
 ![Screenshot](docs/demo.gif)
 
+# experimental deeptrace(clojure only for now)
+```clojure
+(require '[cyrik.omni-trace :as o])
+(o/run-traced 'cyrik.omni-trace.testing-ns/run-machine)
+(tap> (o/rooted-flamegraph 'cyrik.omni-trace.testing-ns/run-machine))
+```
+
+This uses [clj-kondo](https://github.com/clj-kondo/clj-kondo) to find all transitive calls from the provided symbol.
+It then runs the function with any supplied args and untraces everything. This reaches all the way down into clojure.core.
+
+
+![Screenshot](docs/deep-trace.png)
+
+Currently there are still a few problems with recursion and cljs needs to be implemented as well.
+
+
 ## Features
 - Works in clojure and clojurescript
 - Instrument whole namespaces from the repl
