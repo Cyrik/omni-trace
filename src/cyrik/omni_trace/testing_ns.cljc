@@ -117,3 +117,6 @@
       (insert-coin :nickel)
       (insert-coin :penny)
       (press-button :a1)))
+
+(defn i []
+  (inc 1))

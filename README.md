@@ -52,10 +52,17 @@ or just through github source:
 
 ![Screenshot](docs/demo.gif)
 
-# experimental deeptrace(clojure only for now)
+# experimental deeptrace
 ```clojure
 (require '[cyrik.omni-trace :as o])
+
+;; uncomment to also trace clojure.core, tested with testing-ns only
+;; (require '[cyrik.omni-trace.instrument :as i])
+;; (reset! i/ns-blacklist [])
 (o/run-traced 'cyrik.omni-trace.testing-ns/run-machine)
+
+;; run this for cljs
+;; (o/run-traced-cljs 'cyrik.omni-trace.testing-ns/run-machine)
 (tap> (o/rooted-flamegraph 'cyrik.omni-trace.testing-ns/run-machine))
 ```
 
@@ -65,7 +72,9 @@ It then runs the function with any supplied args and untraces everything. This r
 
 ![Screenshot](docs/deep-trace.png)
 
-Currently there are still a few problems with recursion and cljs needs to be implemented as well.
+Currently there are still a few problems with recursion, will have to rewrite the deps graph for it. 
+I'm guessing a lot of code will stil explode when allowing clojure.core trace, since the tracing code itself uses those.
+Will probably cleanup the blacklist and try to use local function copies for tracing.
 
 
 ## Features

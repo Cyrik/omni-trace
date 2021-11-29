@@ -30,12 +30,14 @@
   (defmacro cljs-instrument-fn [[_ sym] opts instrumenter]
     (when-let [v (ana/resolve &env sym)]
       (let [var-name (:name v)
-            file (get-file &env (:file (:meta v)))]
-        `(when-let [instrumented# (~instrumenter '~sym (var ~sym) ~file ~opts)]
-
-
-           (set! ~sym instrumented#)
-           '~var-name))))
+            _ (def local1 sym)
+            _ (def local2 v)
+            file (get-file &env (or (:file (:meta v))
+                                    (:file v)))] ;;incase of jar?
+        (when-not (:macro v)
+         `(when-let [instrumented# (~instrumenter '~sym (var ~sym) ~file ~opts)]
+              (set! ~sym instrumented#)
+              '~var-name)))))
 
   (defmacro cljs-instrument-ns [ns-sym opts instrumented]
     `(doseq [f# ~(->> ns-sym

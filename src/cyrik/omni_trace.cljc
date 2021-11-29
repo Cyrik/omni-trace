@@ -2,9 +2,10 @@
   (:require
    #?(:clj [cyrik.omni-trace.deep-trace :as deep])
    [cyrik.omni-trace.instrument :as i]
-   [cyrik.omni-trace.graph :as flame])
+   [cyrik.omni-trace.graph :as flame]
+   [net.cgrand.macrovich :as macros])
 
-  #?(:cljs (:require-macros [net.cgrand.macrovich :as macros]
+  #?(:cljs (:require-macros 
                             [cyrik.omni-trace :refer [instrument-fn uninstrument-fn instrument-ns uninstrument-ns]])))
 
 (defmacro instrument-fn
@@ -63,7 +64,26 @@
 
 #?(:clj
    (defn run-traced [s & args]
-     (apply #'deep/run-traced (into [s] args))))
+     (apply #'deep/run-traced (into [s] args)))
+   )
+
+
+(defmacro run-traced-cljs [ns f & args]
+  (let [ns (symbol (name ns))
+         f (symbol (name f))
+        dep-list (deep/transitive-deps (deep/deps (deep/analysis ["dev" "src"]) :cljs)
+                                       ns f)
+        sym-list  (mapv #(symbol (name (first %)) (name (second %))) (filter first dep-list)) ;;fix nil namespaces
+        instrumenters (mapv (fn [sym] `#(cyrik.omni-trace.instrument.cljs/cljs-instrument-fn '~sym {:cyrik.omni-trace/workspace cyrik.omni-trace.instrument/workspace} cyrik.omni-trace.instrument/instrumented)) sym-list)
+        deinstrumenters (mapv (fn [sym] `#(cyrik.omni-trace.instrument.cljs/cljs-instrument-fn '~sym {:cyrik.omni-trace/workspace cyrik.omni-trace.instrument/workspace} cyrik.omni-trace.instrument/uninstrumented)) sym-list)
+        runner `#(~(symbol (name ns) (name f)))
+        merged (into [](concat instrumenters [runner] deinstrumenters))
+        ]
+    `(doseq [f# ~merged
+             ]
+       (f#))
+    )
+  )
 
 (comment
   (require '[portal.api :as p])
@@ -71,12 +91,12 @@
   (add-tap #'p/submit)
 
 
-  (name (:ns (meta (resolve 'user/run-machine))))
-  (name 'user/run-machine)
+  
+
+  (filter #(and (= (:lang %) :cljs) (= (:from %) 'cyrik.omni-trace.testing-ns))(:var-usages(deep/analysis ["dev" "src"])))
 
 
 
 
-
-
-  .)
+  .
+  )

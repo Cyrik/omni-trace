@@ -5,6 +5,7 @@
             [portal.console :as console]
             [cyrik.omni-trace.instrument :as i]
             [test-console :as tc]
+            [cljs.analyzer :as ana]
             [cyrik.omni-trace.graph :as flame]
             [portal.web :as p]))
 
@@ -33,6 +34,7 @@
   (o/instrument-ns 'cyrik.omni-trace.testing-ns)
   ;or instrument a single function
   (o/instrument-fn 'user/test-inc)
+
   (test-inc 5)
   ;run functions in that namespace
   (-> e/machine-init
@@ -64,11 +66,74 @@
   (alter-meta! (var cyrik.omni-trace.testing-ns/insert-coin) assoc-in [:stuffs] "yeah123")
   (.log js/console (meta (var cyrik.omni-trace.testing-ns/insert-coin)))
 
+  (macro/cljs-macroexpand-all '(o/instrument-fn 'cljs.core/keep))
+  (reset! i/ns-blacklist [])
+  (o/run-traced-cljs "cyrik.omni-trace.testing-ns" "run-machine")
+  (macro/cljs-macroexpand-all '(o/run-traced-cljs "cyrik.omni-trace.testing-ns" "run-machine"))
+
+  (mapv #(first %) #{['cljs.core '+]})
+  (Math/round 1.5)
   (when-let [open js/OpenFileInEditor] (open "some/file.cljs" 10 1))
   (.log js/console (throw (js/Error. "Oops")))
   ((fn [] (/ 1 0)))
   (try (test-throw-full 5) (catch :default e (.log js/console e)))
   (try (test-throw-full 5) (catch :default e (doto (js->clj e) (.log js/console e))))
-  .)
+
+
+
+  ;; getting multi arity to work
+  (o/instrument-fn 'cljs.core/+)
+  (let*
+   [temp__5753__auto__
+    (cyrik.omni-trace.instrument/instrumented
+     'cljs.core/+
+     #'cljs.core/+
+     "/Users/lukas/Workspace/clojure/omni-trace/src/cyrik/omni_trace/testing_ns.cljc"
+     #:cyrik.omni-trace{:workspace cyrik.omni-trace.instrument/workspace})]
+   (if
+    temp__5753__auto__
+     (do
+       (let*
+        [instrumented__134281__auto__ temp__5753__auto__
+         ayyyy (.assign js/Object (js/Object.) cljs.core/keep instrumented__134281__auto__)]
+        ;; (.log js/console (.-__proto__ instrumented__134281__auto__))
+        ;; (.log js/console instrumented__134281__auto__)
+        ;; (.log js/console ayyyy)
+        (.log js/console (.assign js/Object instrumented__134281__auto__ cljs.core/+))
+        ;; (.log js/console (set! (.-__proto__ (.assign js/Object (js/Object.) instrumented__134281__auto__ cljs.core/keep))
+        ;;                        instrumented__134281__auto__))
+        ;; (set! cljs.core/keep (.assign js/Object (js/Object.) instrumented__134281__auto__ cljs.core/keep))
+        ;; (set! (.-__proto__ ayyyy) (.-__proto__ instrumented__134281__auto__))
+        ;; (set! (.-prototype ayyyy) (.-prototype instrumented__134281__auto__))
+        (set! cljs.core/+ instrumented__134281__auto__)
+        'cljs.core/+))))
+  (let*
+   [temp__5753__auto__
+    (cyrik.omni-trace.instrument/instrumented
+     'cljs.core/+
+     #'cljs.core/+
+     "/Users/lukas/Workspace/clojure/omni-trace/src/cyrik/omni_trace/testing_ns.cljc"
+     #:cyrik.omni-trace{:workspace cyrik.omni-trace.instrument/workspace})]
+   (if
+    temp__5753__auto__
+     (do
+       (let*
+        [instrumented__134281__auto__ temp__5753__auto__
+         ayyyy (.assign js/Object (js/Object.) cljs.core/keep instrumented__134281__auto__)]
+        ;; (.log js/console (.-__proto__ instrumented__134281__auto__))
+        ;; (.log js/console instrumented__134281__auto__)
+        ;; (.log js/console ayyyy)
+        (.log js/console (.assign js/Object instrumented__134281__auto__ cljs.core/+))
+        ;; (.log js/console (set! (.-__proto__ (.assign js/Object (js/Object.) instrumented__134281__auto__ cljs.core/keep))
+        ;;                        instrumented__134281__auto__))
+        ;; (set! cljs.core/keep (.assign js/Object (js/Object.) instrumented__134281__auto__ cljs.core/keep))
+        ;; (set! (.-__proto__ ayyyy) (.-__proto__ instrumented__134281__auto__))
+        ;; (set! (.-prototype ayyyy) (.-prototype instrumented__134281__auto__))
+        (set! cljs.core/+ instrumented__134281__auto__)
+        'cljs.core/+))))
+  (defn arity ([] (set! alter-meta! 1)) ([a] (inc 1)))
+  (set! cljs.core/keep arity)
+  .
+  )
   
   

@@ -9,7 +9,7 @@
 (def empty-workspace {:log {} :max-callsites #{}})
 (defonce workspace (atom empty-workspace))
 
-
+(defonce ns-blacklist (atom ['cljs.core 'clojure.core]))
 (def ^:dynamic *trace-log-parent* nil)
 
 (def default-callsite-log 100)
@@ -60,13 +60,31 @@
     (when (and (fn? to-wrap)
                (not (:macro (meta v)))
                (not (contains? @instrumented-vars v))
-               (not= (:name (meta v)) '=)
-               (not= (:name (meta v)) 'assoc)
+               (not (some #(= % (:ns (meta v))) @ns-blacklist))
+               (not= (:name (meta v)) '=) ;;cljs
+               (not= (:name (meta v)) 'assoc) ;;cljs
+               (not= (:name (meta v)) 'inc) ;;cljs
                (not= (:name (meta v)) 'conj)
                (not= (:name (meta v)) 'map)
-               (not= (:name (meta v)) 'apply))
-      (let [instrumented (fn [& args]
-                           (trace-fn-call sym to-wrap args file opts))]
+               (not= (:name (meta v)) 'first) ;;cljs
+               (not= (:name (meta v)) 'apply)) ;;clj
+      (let [instrumented (fn
+                           ([]
+                            (trace-fn-call sym to-wrap [] file opts))
+                           ([a]
+                            (trace-fn-call sym to-wrap [a] file opts))
+                           ([a b]
+                            (trace-fn-call sym to-wrap [a b] file opts))
+                           ([a b c]
+                            (trace-fn-call sym to-wrap [a b c] file opts))
+                           ([a b c d]
+                            (trace-fn-call sym to-wrap [a b c d] file opts))
+                           ([a b c d e]
+                            (trace-fn-call sym to-wrap [a b c d e] file opts))
+                           ([a b c d e f]
+                            (trace-fn-call sym to-wrap [a b c d e f] file opts))
+                           ([a b c d e f & args]
+                            (trace-fn-call sym to-wrap (into [a b c d e f] args) file opts)))]
         (swap! instrumented-vars assoc v {:orig to-wrap :instrumented instrumented})
         instrumented))))
 
