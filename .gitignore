@@ -14,6 +14,7 @@ resources/public/js/
 *.calva/
 .lsp/
 .portal/
+.lh/
 
 # intellij files
 .idea/

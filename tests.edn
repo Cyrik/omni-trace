@@ -1,0 +1,10 @@
+#kaocha/v1
+ {:tests [{:id         :unit
+           :skip-meta [:debux]
+           :test-paths ["test/unit"]}
+          {:id         :unit-debux
+           :focus-meta [:debux]
+           :test-paths ["test/unit"]}
+          {:id         :features
+           :test-paths ["test/features"]}]
+  :plugins [:kaocha.plugin/print-invocations]}

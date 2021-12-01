@@ -4,8 +4,13 @@
         com.stuartsierra/dependency {:mvn/version "1.0.0"}
         clj-kondo/clj-kondo {:mvn/version "2021.10.19"}
         com.cognitect/transit-clj {:mvn/version "1.0.324"}
+        borkdude/dynaload {:mvn/version "0.2.2"}
         org.clojure/clojurescript {:mvn/version "1.10.879"}}
- :aliases {:build {:deps {io.github.seancorfield/build-clj
+ :aliases {:test {:extra-deps {lambdaisland/kaocha {:mvn/version "1.0.861"}}}
+           :test-kaocha {:extra-paths ["test"]
+                         :main-opts  ["-m" "kaocha.runner"]
+                         :extra-deps {lambdaisland/kaocha {:mvn/version "1.0.861"}}}
+           :build {:deps {io.github.seancorfield/build-clj
                           {:git/tag "v0.5.4" :git/sha "bc9c0cc"}}
                    :ns-default build}
            :check {:extra-deps
@@ -13,13 +18,22 @@
                     {:git/url "https://github.com/athos/clj-check.git"
                      :sha "0ca84df1357d71429243b99908303f45a934654c"}}
                    :main-opts ["-M" "clj-check.check"]}
+           :debux-src {:extra-deps {philoskim/debux
+                                    {:git/url "https://github.com/Cyrik/debux.git"
+                                     :sha "a957ee863f08551d4c0a0adad85c501976c36ef2"}}}
+           :debux {:extra-deps {philoskim/debux {:local/root "../debux"}}}
            :dev {:extra-paths ["dev"]
-                 :extra-deps {criterium/criterium {:mvn/version "0.4.6"}
+                 :extra-deps {philoskim/debux {:local/root "../debux"}
+                              clojure-future-spec/clojure-future-spec {:mvn/version "1.9.0"}
+                              criterium/criterium {:mvn/version "0.4.6"}
                               net.clojars.cyrik/cljs-macroexpand {:mvn/version "0.1.1"}
                               djblue/portal {:mvn/version "0.18.0"}}}
-           :shadow-cljs
-           {:extra-deps {thheller/shadow-cljs {:mvn/version "2.15.5"}}}
-            ;:main-opts ["-m" "shadow.cljs.devtools.cli" "watch" "app"]}
+           :shadow-cljs {:extra-deps {thheller/shadow-cljs {:mvn/version "2.15.5"}}}
+           :test-runner-cognitect {:extra-paths ["test/unit"]
+                                   :extra-deps  {com.cognitect/test-runner
+                                                 {:git/url "https://github.com/cognitect-labs/test-runner.git"
+                                                  :sha     "f7ef16dc3b8332b0d77bc0274578ad5270fbfedd"}}
+                                   :main-opts   ["-m" "cognitect.test-runner"]}
            :cljs {:extra-deps
                   {org.clojure/clojurescript {:mvn/version "1.10.879"}}}}}
                    

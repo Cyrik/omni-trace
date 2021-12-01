@@ -1,7 +1,24 @@
 (ns cyrik.omni-trace.instrument
   (:require [net.cgrand.macrovich :as macros]
             [cyrik.omni-trace.instrument.cljs :as cljs]
+            [borkdude.dynaload :as dynaload]
             #?(:clj [cyrik.omni-trace.instrument.clj :as clj])))
+
+;; #_#?(:clj
+;;    (def debux-enabled?
+;;      (try
+;;        (require 'debux.common.util)
+;;        true
+;;        (catch Throwable _ false)))
+;;    :cljs 
+;;    (def debux-enabled?
+;;      (try
+;;        (when (exists? debux.common.util/result*)
+;;          true)
+;;        (catch :default _ false))))
+(def read-result (dynaload/dynaload 'debux.common.util/result* {:default nil}))
+(def reset-inner-result (dynaload/dynaload 'debux.common.util/reset-result {:default nil}))
+(def register-inner-callback! (dynaload/dynaload 'debux.common.util/user-callback! {:default nil}))
 
 
 (defonce instrumented-vars (atom {}))
@@ -35,6 +52,9 @@
                    {:workspace (:cyrik.omni-trace/workspace opts) :parent :root})
         call-id (keyword (gensym ""))
         before-time (now)
+        inner-result (atom [])
+        _ (when @register-inner-callback!
+            (register-inner-callback! (fn [result] (reset! inner-result result)(reset-inner-result))))
         this (assoc parent :parent call-id)
         res (binding [*trace-log-parent* this]
               (try
@@ -42,12 +62,12 @@
                 (catch #?(:clj Throwable :cljs :default) t
                   (log (:workspace parent)
                        call-id
-                       {:id call-id :file file :name name :args args :start before-time :end (now) :parent (:parent parent) :thrown (#?(:clj Throwable->map :cljs identity) t)}
+                       {:id call-id :file file :name name :args args :start before-time :end (now) :parent (:parent parent) :inner @inner-result :thrown (#?(:clj Throwable->map :cljs identity) t)}
                        opts)
                   (throw t))))]
     (log (:workspace parent)
          call-id
-         {:id call-id :file file :name name :args args :start before-time :end (now) :parent (:parent parent) :return res}
+         {:id call-id :file file :name name :args args :start before-time :end (now) :parent (:parent parent) :return res :inner @inner-result}
          opts)
     res))
 
@@ -55,7 +75,7 @@
   (reset! workspace empty-workspace))
 
 
-(defn instrumented [sym v file opts]
+(defn instrumented [sym v file inner opts]
   (let [to-wrap @v]
     (when (and (fn? to-wrap)
                (not (:macro (meta v)))
@@ -68,7 +88,9 @@
                (not= (:name (meta v)) 'map)
                (not= (:name (meta v)) 'first) ;;cljs
                (not= (:name (meta v)) 'apply)) ;;clj
-      (let [instrumented (fn
+      (let [orig (or inner
+                     to-wrap)
+            instrumented (fn
                            ([]
                             (trace-fn-call sym to-wrap [] file opts))
                            ([a]
@@ -85,10 +107,10 @@
                             (trace-fn-call sym to-wrap [a b c d e f] file opts))
                            ([a b c d e f & args]
                             (trace-fn-call sym to-wrap (into [a b c d e f] args) file opts)))]
-        (swap! instrumented-vars assoc v {:orig to-wrap :instrumented instrumented})
+        (swap! instrumented-vars assoc v {:orig orig :instrumented instrumented})
         instrumented))))
 
-(defn uninstrumented [sym v file opts]
+(defn uninstrumented [sym v file inner opts]
   (when-let [wrapped (@instrumented-vars v)]
     (swap! instrumented-vars dissoc v)
     (:orig wrapped)))

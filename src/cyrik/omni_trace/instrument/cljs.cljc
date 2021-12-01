@@ -35,7 +35,7 @@
             file (get-file &env (or (:file (:meta v))
                                     (:file v)))] ;;incase of jar?
         (when-not (:macro v)
-         `(when-let [instrumented# (~instrumenter '~sym (var ~sym) ~file ~opts)]
+         `(when-let [instrumented# (~instrumenter '~sym (var ~sym) ~file nil ~opts)]
               (set! ~sym instrumented#)
               '~var-name)))))
 
