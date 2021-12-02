@@ -136,7 +136,7 @@
     ([sym-or-syms]
      `(instrument-ns ~sym-or-syms {:cyrik.omni-trace/workspace workspace}))
     ([sym-or-syms opts]
-     (macros/case :clj `(clj/clj-instrument-ns ~sym-or-syms ~opts clj-instrument-fn instrumented)
+     (macros/case :clj `(clj/clj-instrument-ns ~sym-or-syms ~opts clj/clj-instrument-fn instrumented)
                   :cljs `(cljs/cljs-instrument-ns ~sym-or-syms ~opts instrumented))))
 
   (defmacro uninstrument-ns
@@ -144,7 +144,7 @@
     ([sym-or-syms]
      `(uninstrument-ns ~sym-or-syms {:cyrik.omni-trace/workspace workspace}))
     ([sym-or-syms opts]
-     (macros/case :clj `(clj/clj-instrument-ns ~sym-or-syms ~opts clj-instrument-fn uninstrumented)
+     (macros/case :clj `(clj/clj-instrument-ns ~sym-or-syms ~opts clj/clj-instrument-fn uninstrumented)
                   :cljs `(cljs/cljs-uninstrument-ns ~sym-or-syms ~opts uninstrumented)))))
 
 (comment

@@ -24,13 +24,14 @@ or just through github source:
 (ns user
   (:require [cyrik.omni-trace :as o]
             [cyrik.omni-trace.testing-ns :as e]
+            [cyrik.omni-trace.instrument :as i]
             [cyrik.omni-trace.flamegraph :as flame]
             [portal.web :as p]))
 
 
 (comment
   ;instrument a namespace
-  (o/instrument-ns 'omni-trace.testing-ns)
+  (o/instrument-ns 'cyrik.omni-trace.testing-ns)
   ;run functions in that namespace
   (-> e/machine-init
       (e/insert-coin :quarter)
@@ -40,14 +41,14 @@ or just through github source:
       (e/press-button :a1)
       (e/retrieve-change-returned)) ;throws on purpose for demonstration
   ;look at traces for every function that was traced
-  @o/workspace
+  @i/workspace
   ;connect to portal
   (def portal (p/open))
   (add-tap #'p/submit)
   ;send the trace to portal as a vegajs flamegraph
-  (tap> (flame/flamegraph (flame/flamedata @o/workspace)))
+  (tap> (o/flamegraph))
   ;remove tracing from a namesapce
-  (o/uninstrument-ns 'omni-trace.testing-ns))
+  (o/uninstrument-ns 'cyrik.omni-trace.testing-ns))
 ```
 
 ![Screenshot](docs/demo.gif)

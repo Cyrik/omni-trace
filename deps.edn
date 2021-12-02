@@ -23,7 +23,10 @@
                                      :sha "a957ee863f08551d4c0a0adad85c501976c36ef2"}}}
            :debux {:extra-deps {philoskim/debux {:local/root "../debux"}}}
            :dev {:extra-paths ["dev"]
-                 :extra-deps {zprint/zprint {:mvn/version "1.2.0"}
+                 :extra-deps {org.clojure/tools.deps.alpha
+                              {:git/url "https://github.com/clojure/tools.deps.alpha"
+                               :sha     "d77476f3d5f624249462e275ae62d26da89f320b"}
+                              zprint/zprint {:mvn/version "1.2.0"}
                               philoskim/debux {:local/root "../debux"}
                               clojure-future-spec/clojure-future-spec {:mvn/version "1.9.0"}
                               criterium/criterium {:mvn/version "0.4.6"}

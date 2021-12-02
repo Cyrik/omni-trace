@@ -60,7 +60,7 @@
   (o/run-traced 'cyrik.omni-trace.testing-ns/run-machine)
   (tap> (flame/flamedata @i/workspace 'cyrik.omni-trace.testing-ns/run-machine))
   (tap> (o/rooted-flamegraph 'cyrik.omni-trace.testing-ns/run-machine))
-  (tap> (o/flamegraph i/workspace))
+  (tap> (o/flamegraph))
 
 
   i/instrumented-vars
