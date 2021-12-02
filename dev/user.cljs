@@ -5,9 +5,11 @@
             [portal.console :as console]
             [cyrik.omni-trace.instrument :as i]
             [test-console :as tc]
+            [debux.cs.core :as d]
             [cljs.analyzer :as ana]
             [cyrik.omni-trace.graph :as flame]
-            [portal.web :as p]))
+            [portal.web :as p]
+            [cljs.pprint :refer [pprint]]))
 
 (defn test-inc [x]
   (inc x))
@@ -20,11 +22,6 @@
   (throw (js/Error. "Oops"))
   (inc x))
 
-(defn test-log [x]
-  (tc/log x)
-  (inc x))
-
-(test-log 1)
 
 (defonce portal (p/open))
 (add-tap #'p/submit)
@@ -61,7 +58,6 @@
   (macroexpand '(o/instrument-fn 'cyrik.omni-trace.testing-ns/insert-coin))
   (macro/cljs-macroexpand-all '(o/instrument-ns 'portal.web))
   (macro/cljs-macroexpand-all '(o/instrument-fn 'cyrik.omni-trace.testing-ns/insert-coin))
-  (test-log 5)
   (macro/cljs-macroexpand-all '(tc/log 5))
   (alter-meta! (var cyrik.omni-trace.testing-ns/insert-coin) assoc-in [:stuffs] "yeah123")
   (.log js/console (meta (var cyrik.omni-trace.testing-ns/insert-coin)))
@@ -79,58 +75,27 @@
   (try (test-throw-full 5) (catch :default e (.log js/console e)))
   (try (test-throw-full 5) (catch :default e (doto (js->clj e) (.log js/console e))))
 
+(require '[zprint.core :as zp])
+(def example {:this :is :a :test :it :is :only :a :test :foo :bar :baz :but :better :if :it :does :not :fit :on :one :line})
+
+{:but :better, :one :line, :only :a, :if :it, :fit :on, :this :is, :does :not, :bar :baz, :it :is, :test :foo, :a :test}
+(zp/zprint example)
+{:a :test
+ :bar :baz
+ :but :better
+ :does :not
+ :fit :on
+ :if :it
+ :it :is
+ :one :line
+ :only :a
+ :test :foo
+ :this :is}
+nil
+
 
 
   ;; getting multi arity to work
-  (o/instrument-fn 'cljs.core/+)
-  (let*
-   [temp__5753__auto__
-    (cyrik.omni-trace.instrument/instrumented
-     'cljs.core/+
-     #'cljs.core/+
-     "/Users/lukas/Workspace/clojure/omni-trace/src/cyrik/omni_trace/testing_ns.cljc"
-     #:cyrik.omni-trace{:workspace cyrik.omni-trace.instrument/workspace})]
-   (if
-    temp__5753__auto__
-     (do
-       (let*
-        [instrumented__134281__auto__ temp__5753__auto__
-         ayyyy (.assign js/Object (js/Object.) cljs.core/keep instrumented__134281__auto__)]
-        ;; (.log js/console (.-__proto__ instrumented__134281__auto__))
-        ;; (.log js/console instrumented__134281__auto__)
-        ;; (.log js/console ayyyy)
-        (.log js/console (.assign js/Object instrumented__134281__auto__ cljs.core/+))
-        ;; (.log js/console (set! (.-__proto__ (.assign js/Object (js/Object.) instrumented__134281__auto__ cljs.core/keep))
-        ;;                        instrumented__134281__auto__))
-        ;; (set! cljs.core/keep (.assign js/Object (js/Object.) instrumented__134281__auto__ cljs.core/keep))
-        ;; (set! (.-__proto__ ayyyy) (.-__proto__ instrumented__134281__auto__))
-        ;; (set! (.-prototype ayyyy) (.-prototype instrumented__134281__auto__))
-        (set! cljs.core/+ instrumented__134281__auto__)
-        'cljs.core/+))))
-  (let*
-   [temp__5753__auto__
-    (cyrik.omni-trace.instrument/instrumented
-     'cljs.core/+
-     #'cljs.core/+
-     "/Users/lukas/Workspace/clojure/omni-trace/src/cyrik/omni_trace/testing_ns.cljc"
-     #:cyrik.omni-trace{:workspace cyrik.omni-trace.instrument/workspace})]
-   (if
-    temp__5753__auto__
-     (do
-       (let*
-        [instrumented__134281__auto__ temp__5753__auto__
-         ayyyy (.assign js/Object (js/Object.) cljs.core/keep instrumented__134281__auto__)]
-        ;; (.log js/console (.-__proto__ instrumented__134281__auto__))
-        ;; (.log js/console instrumented__134281__auto__)
-        ;; (.log js/console ayyyy)
-        (.log js/console (.assign js/Object instrumented__134281__auto__ cljs.core/+))
-        ;; (.log js/console (set! (.-__proto__ (.assign js/Object (js/Object.) instrumented__134281__auto__ cljs.core/keep))
-        ;;                        instrumented__134281__auto__))
-        ;; (set! cljs.core/keep (.assign js/Object (js/Object.) instrumented__134281__auto__ cljs.core/keep))
-        ;; (set! (.-__proto__ ayyyy) (.-__proto__ instrumented__134281__auto__))
-        ;; (set! (.-prototype ayyyy) (.-prototype instrumented__134281__auto__))
-        (set! cljs.core/+ instrumented__134281__auto__)
-        'cljs.core/+))))
   (defn arity ([] (set! alter-meta! 1)) ([a] (inc 1)))
   (set! cljs.core/keep arity)
   .

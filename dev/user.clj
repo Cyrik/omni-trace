@@ -8,6 +8,7 @@
             [debux.core :as d]
             [clojure.walk :as walk]
             [test-console :as tc]
+            [zprint.core :as zp]
             [debux.common.util :as ut]
             [clojure.pprint :as pprint]
             [cyrik.omni-trace.graph :as flame]))
@@ -55,6 +56,7 @@
                    {::o/workspace i/workspace})
 
   (e/run-machine)
+  (zp/zprint (:log @i/workspace))
   (o/run-traced 'cyrik.omni-trace.testing-ns/run-machine)
   (tap> (flame/flamedata @i/workspace 'cyrik.omni-trace.testing-ns/run-machine))
   (tap> (o/rooted-flamegraph 'cyrik.omni-trace.testing-ns/run-machine))

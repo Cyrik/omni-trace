@@ -69,7 +69,7 @@
   (require '[portal.api :as p])
   (def portal (p/open))
   (add-tap #'p/submit)
-
+  (deep-trace* 'cyrik.omni-trace.testing-ns 'run-machine #())
   (time (def analysis (clj-kondo/run! {:parallel true
                                        :cache true
                                        :lint ["/Users/lukas/Workspace/clojure/omni-trace/src"]

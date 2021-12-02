@@ -23,7 +23,8 @@
                                      :sha "a957ee863f08551d4c0a0adad85c501976c36ef2"}}}
            :debux {:extra-deps {philoskim/debux {:local/root "../debux"}}}
            :dev {:extra-paths ["dev"]
-                 :extra-deps {philoskim/debux {:local/root "../debux"}
+                 :extra-deps {zprint/zprint {:mvn/version "1.2.0"}
+                              philoskim/debux {:local/root "../debux"}
                               clojure-future-spec/clojure-future-spec {:mvn/version "1.9.0"}
                               criterium/criterium {:mvn/version "0.4.6"}
                               net.clojars.cyrik/cljs-macroexpand {:mvn/version "0.1.1"}

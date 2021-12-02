@@ -19,11 +19,12 @@
 (def read-result (dynaload/dynaload 'debux.common.util/result* {:default nil}))
 (def reset-inner-result (dynaload/dynaload 'debux.common.util/reset-result {:default nil}))
 (def register-inner-callback! (dynaload/dynaload 'debux.common.util/user-callback! {:default nil}))
+(def debux-loaded? (if @register-inner-callback! true false))
 
 
 (defonce instrumented-vars (atom {}))
 
-(def empty-workspace {:log {} :max-callsites #{}})
+(def empty-workspace {:log {} :maxed-callsites #{} :call-sites {}})
 (defonce workspace (atom empty-workspace))
 
 (defonce ns-blacklist (atom ['cljs.core 'clojure.core]))
@@ -42,10 +43,11 @@
 (defn same-callsite? [trace1 trace2]
   (= (callsite trace1) (callsite trace2)))
 (defn log [workspace id trace opts]
-  (if (< (count (filter #(same-callsite? trace (second %)) (:log @workspace)))
+  (if (< (get (:call-sites @workspace) (callsite trace) 0)
          (get opts :cyrik.omni-trace/max-callsite-log default-callsite-log))
-    (swap! workspace assoc-in [:log id] trace)
-    (swap! workspace assoc :max-callsites (callsite trace))))
+    (do (swap! workspace assoc-in [:log id] trace)
+        (swap! workspace update-in [:call-sites (callsite trace)] (fnil inc 0)))
+    (swap! workspace assoc :maxed-callsites (callsite trace))))
 
 (defn trace-fn-call [name f args file opts]
   (let [parent (or *trace-log-parent*
@@ -53,7 +55,7 @@
         call-id (keyword (gensym ""))
         before-time (now)
         inner-result (atom [])
-        _ (when @register-inner-callback!
+        _ (when debux-loaded?
             (register-inner-callback! (fn [result] (reset! inner-result result)(reset-inner-result))))
         this (assoc parent :parent call-id)
         res (binding [*trace-log-parent* this]
@@ -80,7 +82,7 @@
     (when (and (fn? to-wrap)
                (not (:macro (meta v)))
                (not (contains? @instrumented-vars v))
-               (not (some #(= % (:ns (meta v))) @ns-blacklist))
+               (not (some #(= % (ns-name (:ns (meta v)))) @ns-blacklist))
                (not= (:name (meta v)) '=) ;;cljs
                (not= (:name (meta v)) 'assoc) ;;cljs
                (not= (:name (meta v)) 'inc) ;;cljs
@@ -144,3 +146,7 @@
     ([sym-or-syms opts]
      (macros/case :clj `(clj/clj-instrument-ns ~sym-or-syms ~opts clj-instrument-fn uninstrumented)
                   :cljs `(cljs/cljs-uninstrument-ns ~sym-or-syms ~opts uninstrumented)))))
+
+(comment
+(not (some #(= % (ns-name (:ns (meta #'clojure.core//)))) @ns-blacklist))
+)
