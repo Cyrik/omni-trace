@@ -4,6 +4,14 @@
             [cyrik.omni-trace :as o]
             [cyrik.omni-trace.testing-ns :as t]))
 
+(defn ns-reset [test-function]
+  (o/reset-workspace!)
+  (test-function)
+  (o/reset-workspace!)
+  (o/uninstrument-ns 'cyrik.omni-trace.testing-ns))
+
+(use-fixtures :each ns-reset)
+
 (deftest ^:no-debux instrument-fn-debux
   (testing "throws if debux is not installed but inner-trace is used"
     (is (thrown-with-msg? Exception #"added debux to dependencies for :inner-trace"

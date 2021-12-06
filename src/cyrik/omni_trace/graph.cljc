@@ -23,6 +23,21 @@
    [{:name "clicked", :value nil, :on [{:events "click", :update "datum ? {value: datum.id, depth: datum.depth} : null", :force true}]}
     {:name "clear", :value true, :on [{:events "mouseup[!event.item]", :update "true", :force true}]}
     {:name "shift", :value false, :on [{:events "click", :update "event.shiftKey", :force true}]}
+    {:name "over"
+     :on [{:events "mouseover", :source "window", :force true, :update "datum ? datum : null"}]
+     :value false}
+    {:name "key"
+     :on [{:events {:type "keydown",  :force true, :source "window", :filter "event.key === 'a'"},  
+           :update "over ? over : null"}]}
+    {:name "copy"
+     :on [{:events {:type "keydown",  :force true, :source "window", :filter "event.key === 'c'"},  
+           :update "over ? over.name : null"}]}
+    {:name "definition"
+     :on [{:events {:type "keydown",  :force true, :source "window", :filter "event.key === 'd'"},  
+           :update "over ? over.meta : null"}]}
+    {:name "args"
+     :on [{:events {:type "keydown",  :force true, :source "window", :filter "event.key === 'c'"},  
+           :update "over ? {traceid: over.id, args:over.args} : null"}]}
     {:name "xdom"
      :update "slice(xext)"
      :on
@@ -39,7 +54,7 @@
        :update "[anchor[1] + (ydom[0] - anchor[1]) * zoom, anchor[1] + (ydom[1] - anchor[1]) * zoom]"}]}
     {:name "size", :update "clamp(20 / span(xdom), 0.01, 1000)"}
     {:name "xext", :update "[0, width]"} ;; hardcode value dimensions, might use this later
-    {:name "yext", :update "[height, 0]"} 
+    {:name "yext", :update "[height, 0]"}
     {:name "xcur", :value nil, :on [{:events "mousedown, touchstart, touchend", :update "slice(xdom)"}]}
     {:name "ycur", :value nil, :on [{:events "mousedown, touchstart, touchend", :update "slice(ydom)"}]}
     {:name "delta"
@@ -162,4 +177,6 @@
        :sort {:field "id"}}]}]})
 
 (defn flamegraph [data]
-  (flamegraph-with-click data))
+  (-> (flamegraph-with-click data)
+      (assoc :portal-opts [{:signal "definition" :command 'example.core/goto-definition}
+                           {:signal "args" :command 'cyrik.omni-trace/re-run}])))

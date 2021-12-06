@@ -6,13 +6,13 @@
    :nickel 0.05
    :penny 1})
 
-(defn- calc-coin-value
+(defn calc-coin-value
   [coins]
   (->> coins
        (keep coin-values)
        (apply +)))
 
-(defn- round-to-pennies
+(defn round-to-pennies
   "Because floating-point inaccuracy"
   [v]
   (-> v
@@ -20,7 +20,7 @@
       Math/round
       (/ 100.0)))
 
-(defn- calc-change-to-return*
+(defn calc-change-to-return*
   [amount-to-return coins]
   (let [value (calc-coin-value coins)]
     (cond
@@ -32,7 +32,7 @@
                  (keep #(calc-change-to-return* amount-to-return %))
                  first))))
 
-(defn- calc-change-to-return
+(defn calc-change-to-return
   [machine selection]
   (let [amount-to-return (-> machine
                              :coins-inserted
@@ -41,7 +41,7 @@
                              round-to-pennies)]
     (calc-change-to-return* amount-to-return [])))
 
-(defn- get-selection
+(defn get-selection
   [machine button]
   (-> machine
       :inventory

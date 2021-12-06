@@ -33,9 +33,11 @@
             _ (def local1 sym)
             _ (def local2 v)
             file (get-file &env (or (:file (:meta v))
-                                    (:file v)))] ;;incase of jar?
+                                    (:file v)));;incase of jar?
+            meta* (assoc (:meta v) :file file)
+            _ (def local3 meta*)] 
         (when-not (:macro v)
-         `(when-let [instrumented# (~instrumenter '~sym (var ~sym) ~file nil ~opts)]
+         `(when-let [instrumented# (~instrumenter '~sym (var ~sym) ~meta* nil ~opts)]
               (set! ~sym instrumented#)
               '~var-name)))))
 

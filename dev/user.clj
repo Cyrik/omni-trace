@@ -7,12 +7,15 @@
             [criterium.core :as crit]
             [debux.core :as d]
             [clojure.walk :as walk]
+            [clojure.tools.namespace.repl]
             [test-console :as tc]
             [zprint.core :as zp]
+            [clojure.tools.deps.alpha.repl :as repl]
             [debux.common.util :as ut]
             [clojure.pprint :as pprint]
             [cyrik.omni-trace.graph :as flame]))
 
+(repl/add-libs '{org.clojure/tools.namespace {:mvn/version "1.1.0"}})
 (defn spit-pretty!
   "Writes the pretty-printed edn `data` into the `file`."
   [file data]
@@ -20,7 +23,6 @@
         (with-out-str
           (pprint/pprint data))))
 
-(declare factorial)
 (defn factorial [acc n]
   (if (zero? n)
     acc
@@ -46,12 +48,64 @@
 (defonce portal (p/open))
 (add-tap #'p/submit)
 (comment
+  "https://github.com/Cyrik/omni-trace"
+  ;; tracing + visualization + tool integrations
+  ;; debug your own code + understand calls into libs
 
-  (o/instrument-fn 'user/test-inc {::o/workspace i/workspace :inner-trace true})
-  (o/instrument-fn 'cyrik.omni-trace.testing-ns/run-machine)
-  (test-inc 123)
+  ;; run-traced
+  (o/reset-workspace!)
+  (o/run-traced 'cyrik.omni-trace.testing-ns/run-machine)
+  (tap> (o/flamegraph))
+  (o/reset-workspace!)
 
+  ;; inner trace
+  (ut/set-use-result-atom! true)
+  (o/instrument-fn 'user/fact {:cyrik.omni-trace/workspace i/workspace :inner-trace true})
+  (fact 3)
+  (:log @i/workspace)
+  (o/reset-workspace!)
+  (o/uninstrument-fn 'user/fact)
+  (reset! i/instrumented-vars {})
+
+  ;; deep into core
+  (reset! i/ns-blacklist [])
+  (o/run-traced 'cyrik.omni-trace.testing-ns/run-machine)
+  (tap> (o/flamegraph))
+  (o/reset-workspace!)
+  (reset! i/ns-blacklist ['cljs.core 'clojure.core])
+
+  ;; max callsites
+  (o/instrument-fn 'user/test-inc)
   (mapv test-inc (range 1000))
+  (count (:log @i/workspace))
+  (:maxed-callsites @i/workspace)
+  (o/reset-workspace!)
+  (o/uninstrument-fn 'user/test-inc)
+
+  ;; catch thrown
+  (o/instrument-ns 'cyrik.omni-trace.testing-ns)
+  (-> e/machine-init
+      (e/insert-coin :quarter)
+      (e/insert-coin :dime)
+      (e/insert-coin :nickel)
+      (e/insert-coin :penny)
+      (e/press-button :a1)
+      (e/retrieve-change-returned))
+  (tap> (o/flamegraph))
+  (o/uninstrument-ns 'cyrik.omni-trace.testing-ns)
+  (o/reset-workspace!)
+
+  ;; nearly done: - key press to jump to definition
+  ;; - key press to "put execution into copy" 
+  ;;   -> (apply cyrik.omni-trace.testing-ns/insert-coin @o/call-args)
+
+  ;; todo: - update graph data on the fly
+  ;; - push less data into the vis, then push more on zoom
+  ;; - integration with reveal / clerk and so on
+  ;; - its own viewer?
+  ;; - deep-trace into core with fewer problems
+
+
   (o/instrument-ns 'cyrik.omni-trace.testing-ns
                    {::o/workspace i/workspace})
 
@@ -104,7 +158,7 @@
   (reset! ut/result* [])
   (o/reset-workspace!)
   (reset! i/instrumented-vars {})
-  
+
   (walk/macroexpand-all '(d/dbgn (defn factorial [acc n]
                                    (if (zero? n)
                                      acc
@@ -117,397 +171,11 @@
                                        (recur (* acc n) (dec n)))))
                                  (clojure.core/zipmap 'nil [])
                                  {:evals (atom {}), :line 106, :ns "user"}))
-  
+
   (d/dbgn (defn fact [num]
             (loop [acc 1 n num]
               (if (zero? n)
                 acc
                 (recur (* acc n) (dec n))))))
-  
-  (def
-    factorial
-    (fn*
-     ([acc n]
-      (let*
-       []
-       (clojure.core/push-thread-bindings
-        (clojure.core/hash-map
-         #'debux.common.util/*indent-level*
-         (clojure.core/inc debux.common.util/*indent-level*)))
-       (try
-         (clojure.core/reset! (:evals +debux-dbg-opts+) {})
-         (debux.common.util/insert-blank-line)
-         (let*
-          [result__73764__auto__
-           (let*
-            [opts__70960__auto__
-             +debux-dbg-opts+
-             n__70961__auto__
-             (let*
-              [or__5533__auto__ (:n opts__70960__auto__)]
-              (if or__5533__auto__ or__5533__auto__ (:print-length @debux.common.util/config*)))
-             form__70962__auto__
-             '(if (zero? n) acc (factorial (* acc n) (dec n)))
-             result__70963__auto__
-             (if
-              (let*
-               [opts__70960__auto__
-                +debux-dbg-opts+
-                n__70961__auto__
-                (let*
-                 [or__5533__auto__ (:n opts__70960__auto__)]
-                 (if or__5533__auto__ or__5533__auto__ (:print-length @debux.common.util/config*)))
-                form__70962__auto__
-                '(zero? n)
-                result__70963__auto__
-                (zero?
-                 (let*
-                  [opts__70960__auto__
-                   +debux-dbg-opts+
-                   n__70961__auto__
-                   (let*
-                    [or__5533__auto__ (:n opts__70960__auto__)]
-                    (if or__5533__auto__ or__5533__auto__ (:print-length @debux.common.util/config*)))
-                   form__70962__auto__
-                   'n
-                   result__70963__auto__
-                   n]
-                  (if
-                   (let*
-                    [or__5533__auto__ (:dup opts__70960__auto__)]
-                    (if
-                     or__5533__auto__
-                      or__5533__auto__
-                      (debux.common.util/eval-changed?
-                       (:evals opts__70960__auto__)
-                       form__70962__auto__
-                       result__70963__auto__)))
-                    (do
-                      (debux.common.util/trace!
-                       form__70962__auto__
-                       (clojure.core/meta form__70962__auto__)
-                       result__70963__auto__)
-                      (debux.common.util/print-form-with-indent
-                       (debux.common.util/form-header form__70962__auto__ (:msg opts__70960__auto__)))
-                      (let*
-                       []
-                       (clojure.core/push-thread-bindings
-                        (clojure.core/hash-map #'clojure.core/*print-length* n__70961__auto__))
-                       (try
-                         (debux.common.util/pprint-result-with-indent result__70963__auto__)
-                         (finally (clojure.core/pop-thread-bindings))))))
-                  result__70963__auto__))]
-               (if
-                (let*
-                 [or__5533__auto__ (:dup opts__70960__auto__)]
-                 (if
-                  or__5533__auto__
-                   or__5533__auto__
-                   (debux.common.util/eval-changed?
-                    (:evals opts__70960__auto__)
-                    form__70962__auto__
-                    result__70963__auto__)))
-                 (do
-                   (debux.common.util/trace!
-                    form__70962__auto__
-                    (clojure.core/meta form__70962__auto__)
-                    result__70963__auto__)
-                   (debux.common.util/print-form-with-indent
-                    (debux.common.util/form-header form__70962__auto__ (:msg opts__70960__auto__)))
-                   (let*
-                    []
-                    (clojure.core/push-thread-bindings
-                     (clojure.core/hash-map #'clojure.core/*print-length* n__70961__auto__))
-                    (try
-                      (debux.common.util/pprint-result-with-indent result__70963__auto__)
-                      (finally (clojure.core/pop-thread-bindings))))))
-               result__70963__auto__)
-               (let*
-                [opts__70960__auto__
-                 +debux-dbg-opts+
-                 n__70961__auto__
-                 (let*
-                  [or__5533__auto__ (:n opts__70960__auto__)]
-                  (if or__5533__auto__ or__5533__auto__ (:print-length @debux.common.util/config*)))
-                 form__70962__auto__
-                 'acc
-                 result__70963__auto__
-                 acc]
-                (if
-                 (let*
-                  [or__5533__auto__ (:dup opts__70960__auto__)]
-                  (if
-                   or__5533__auto__
-                    or__5533__auto__
-                    (debux.common.util/eval-changed?
-                     (:evals opts__70960__auto__)
-                     form__70962__auto__
-                     result__70963__auto__)))
-                  (do
-                    (debux.common.util/trace!
-                     form__70962__auto__
-                     (clojure.core/meta form__70962__auto__)
-                     result__70963__auto__)
-                    (debux.common.util/print-form-with-indent
-                     (debux.common.util/form-header form__70962__auto__ (:msg opts__70960__auto__)))
-                    (let*
-                     []
-                     (clojure.core/push-thread-bindings
-                      (clojure.core/hash-map #'clojure.core/*print-length* n__70961__auto__))
-                     (try
-                       (debux.common.util/pprint-result-with-indent result__70963__auto__)
-                       (finally (clojure.core/pop-thread-bindings))))))
-                result__70963__auto__)
-               (let*
-                [opts__70960__auto__
-                 +debux-dbg-opts+
-                 n__70961__auto__
-                 (let*
-                  [or__5533__auto__ (:n opts__70960__auto__)]
-                  (if or__5533__auto__ or__5533__auto__ (:print-length @debux.common.util/config*)))
-                 form__70962__auto__
-                 '(factorial (* acc n) (dec n))
-                 result__70963__auto__
-                 (factorial
-                  (let*
-                   [opts__70960__auto__
-                    +debux-dbg-opts+
-                    n__70961__auto__
-                    (let*
-                     [or__5533__auto__ (:n opts__70960__auto__)]
-                     (if or__5533__auto__ or__5533__auto__ (:print-length @debux.common.util/config*)))
-                    form__70962__auto__
-                    '(* acc n)
-                    result__70963__auto__
-                    (*
-                     (let*
-                      [opts__70960__auto__
-                       +debux-dbg-opts+
-                       n__70961__auto__
-                       (let*
-                        [or__5533__auto__ (:n opts__70960__auto__)]
-                        (if or__5533__auto__ or__5533__auto__ (:print-length @debux.common.util/config*)))
-                       form__70962__auto__
-                       'acc
-                       result__70963__auto__
-                       acc]
-                      (if
-                       (let*
-                        [or__5533__auto__ (:dup opts__70960__auto__)]
-                        (if
-                         or__5533__auto__
-                          or__5533__auto__
-                          (debux.common.util/eval-changed?
-                           (:evals opts__70960__auto__)
-                           form__70962__auto__
-                           result__70963__auto__)))
-                        (do
-                          (debux.common.util/trace!
-                           form__70962__auto__
-                           (clojure.core/meta form__70962__auto__)
-                           result__70963__auto__)
-                          (debux.common.util/print-form-with-indent
-                           (debux.common.util/form-header form__70962__auto__ (:msg opts__70960__auto__)))
-                          (let*
-                           []
-                           (clojure.core/push-thread-bindings
-                            (clojure.core/hash-map #'clojure.core/*print-length* n__70961__auto__))
-                           (try
-                             (debux.common.util/pprint-result-with-indent result__70963__auto__)
-                             (finally (clojure.core/pop-thread-bindings))))))
-                      result__70963__auto__)
-                     (let*
-                      [opts__70960__auto__
-                       +debux-dbg-opts+
-                       n__70961__auto__
-                       (let*
-                        [or__5533__auto__ (:n opts__70960__auto__)]
-                        (if or__5533__auto__ or__5533__auto__ (:print-length @debux.common.util/config*)))
-                       form__70962__auto__
-                       'n
-                       result__70963__auto__
-                       n]
-                      (if
-                       (let*
-                        [or__5533__auto__ (:dup opts__70960__auto__)]
-                        (if
-                         or__5533__auto__
-                          or__5533__auto__
-                          (debux.common.util/eval-changed?
-                           (:evals opts__70960__auto__)
-                           form__70962__auto__
-                           result__70963__auto__)))
-                        (do
-                          (debux.common.util/trace!
-                           form__70962__auto__
-                           (clojure.core/meta form__70962__auto__)
-                           result__70963__auto__)
-                          (debux.common.util/print-form-with-indent
-                           (debux.common.util/form-header form__70962__auto__ (:msg opts__70960__auto__)))
-                          (let*
-                           []
-                           (clojure.core/push-thread-bindings
-                            (clojure.core/hash-map #'clojure.core/*print-length* n__70961__auto__))
-                           (try
-                             (debux.common.util/pprint-result-with-indent result__70963__auto__)
-                             (finally (clojure.core/pop-thread-bindings))))))
-                      result__70963__auto__))]
-                   (if
-                    (let*
-                     [or__5533__auto__ (:dup opts__70960__auto__)]
-                     (if
-                      or__5533__auto__
-                       or__5533__auto__
-                       (debux.common.util/eval-changed?
-                        (:evals opts__70960__auto__)
-                        form__70962__auto__
-                        result__70963__auto__)))
-                     (do
-                       (debux.common.util/trace!
-                        form__70962__auto__
-                        (clojure.core/meta form__70962__auto__)
-                        result__70963__auto__)
-                       (debux.common.util/print-form-with-indent
-                        (debux.common.util/form-header form__70962__auto__ (:msg opts__70960__auto__)))
-                       (let*
-                        []
-                        (clojure.core/push-thread-bindings
-                         (clojure.core/hash-map #'clojure.core/*print-length* n__70961__auto__))
-                        (try
-                          (debux.common.util/pprint-result-with-indent result__70963__auto__)
-                          (finally (clojure.core/pop-thread-bindings))))))
-                   result__70963__auto__)
-                  (let*
-                   [opts__70960__auto__
-                    +debux-dbg-opts+
-                    n__70961__auto__
-                    (let*
-                     [or__5533__auto__ (:n opts__70960__auto__)]
-                     (if or__5533__auto__ or__5533__auto__ (:print-length @debux.common.util/config*)))
-                    form__70962__auto__
-                    '(dec n)
-                    result__70963__auto__
-                    (dec
-                     (let*
-                      [opts__70960__auto__
-                       +debux-dbg-opts+
-                       n__70961__auto__
-                       (let*
-                        [or__5533__auto__ (:n opts__70960__auto__)]
-                        (if or__5533__auto__ or__5533__auto__ (:print-length @debux.common.util/config*)))
-                       form__70962__auto__
-                       'n
-                       result__70963__auto__
-                       n]
-                      (if
-                       (let*
-                        [or__5533__auto__ (:dup opts__70960__auto__)]
-                        (if
-                         or__5533__auto__
-                          or__5533__auto__
-                          (debux.common.util/eval-changed?
-                           (:evals opts__70960__auto__)
-                           form__70962__auto__
-                           result__70963__auto__)))
-                        (do
-                          (debux.common.util/trace!
-                           form__70962__auto__
-                           (clojure.core/meta form__70962__auto__)
-                           result__70963__auto__)
-                          (debux.common.util/print-form-with-indent
-                           (debux.common.util/form-header form__70962__auto__ (:msg opts__70960__auto__)))
-                          (let*
-                           []
-                           (clojure.core/push-thread-bindings
-                            (clojure.core/hash-map #'clojure.core/*print-length* n__70961__auto__))
-                           (try
-                             (debux.common.util/pprint-result-with-indent result__70963__auto__)
-                             (finally (clojure.core/pop-thread-bindings))))))
-                      result__70963__auto__))]
-                   (if
-                    (let*
-                     [or__5533__auto__ (:dup opts__70960__auto__)]
-                     (if
-                      or__5533__auto__
-                       or__5533__auto__
-                       (debux.common.util/eval-changed?
-                        (:evals opts__70960__auto__)
-                        form__70962__auto__
-                        result__70963__auto__)))
-                     (do
-                       (debux.common.util/trace!
-                        form__70962__auto__
-                        (clojure.core/meta form__70962__auto__)
-                        result__70963__auto__)
-                       (debux.common.util/print-form-with-indent
-                        (debux.common.util/form-header form__70962__auto__ (:msg opts__70960__auto__)))
-                       (let*
-                        []
-                        (clojure.core/push-thread-bindings
-                         (clojure.core/hash-map #'clojure.core/*print-length* n__70961__auto__))
-                        (try
-                          (debux.common.util/pprint-result-with-indent result__70963__auto__)
-                          (finally (clojure.core/pop-thread-bindings))))))
-                   result__70963__auto__))]
-                (if
-                 (let*
-                  [or__5533__auto__ (:dup opts__70960__auto__)]
-                  (if
-                   or__5533__auto__
-                    or__5533__auto__
-                    (debux.common.util/eval-changed?
-                     (:evals opts__70960__auto__)
-                     form__70962__auto__
-                     result__70963__auto__)))
-                  (do
-                    (debux.common.util/trace!
-                     form__70962__auto__
-                     (clojure.core/meta form__70962__auto__)
-                     result__70963__auto__)
-                    (debux.common.util/print-form-with-indent
-                     (debux.common.util/form-header form__70962__auto__ (:msg opts__70960__auto__)))
-                    (let*
-                     []
-                     (clojure.core/push-thread-bindings
-                      (clojure.core/hash-map #'clojure.core/*print-length* n__70961__auto__))
-                     (try
-                       (debux.common.util/pprint-result-with-indent result__70963__auto__)
-                       (finally (clojure.core/pop-thread-bindings))))))
-                result__70963__auto__))]
-            (if
-             (let*
-              [or__5533__auto__ (:dup opts__70960__auto__)]
-              (if
-               or__5533__auto__
-                or__5533__auto__
-                (debux.common.util/eval-changed?
-                 (:evals opts__70960__auto__)
-                 form__70962__auto__
-                 result__70963__auto__)))
-              (do
-                (debux.common.util/trace!
-                 form__70962__auto__
-                 (clojure.core/meta form__70962__auto__)
-                 result__70963__auto__)
-                (debux.common.util/print-form-with-indent
-                 (debux.common.util/form-header form__70962__auto__ (:msg opts__70960__auto__)))
-                (let*
-                 []
-                 (clojure.core/push-thread-bindings
-                  (clojure.core/hash-map #'clojure.core/*print-length* n__70961__auto__))
-                 (try
-                   (debux.common.util/pprint-result-with-indent result__70963__auto__)
-                   (finally (clojure.core/pop-thread-bindings))))))
-            result__70963__auto__)
-           _
-           (debux.common.util/trace-binding!
-            'result__73764__auto__
-            result__73764__auto__
-            (clojure.core/meta 'result__73764__auto__))]
-          (debux.common.util/insert-blank-line)
-          ((:user-call @debux.common.util/config*) @debux.common.util/result*)
-          result__73764__auto__)
-         (finally (clojure.core/pop-thread-bindings)))))))
-  .
-  )
-  
+
+  .)

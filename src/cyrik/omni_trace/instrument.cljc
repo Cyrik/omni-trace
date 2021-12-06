@@ -4,18 +4,6 @@
             [borkdude.dynaload :as dynaload]
             #?(:clj [cyrik.omni-trace.instrument.clj :as clj])))
 
-;; #_#?(:clj
-;;    (def debux-enabled?
-;;      (try
-;;        (require 'debux.common.util)
-;;        true
-;;        (catch Throwable _ false)))
-;;    :cljs 
-;;    (def debux-enabled?
-;;      (try
-;;        (when (exists? debux.common.util/result*)
-;;          true)
-;;        (catch :default _ false))))
 (def read-result (dynaload/dynaload 'debux.common.util/result* {:default nil}))
 (def reset-inner-result (dynaload/dynaload 'debux.common.util/reset-result {:default nil}))
 (def register-inner-callback! (dynaload/dynaload 'debux.common.util/user-callback! {:default nil}))
@@ -49,7 +37,7 @@
         (swap! workspace update-in [:call-sites (callsite trace)] (fnil inc 0)))
     (swap! workspace assoc :maxed-callsites (callsite trace))))
 
-(defn trace-fn-call [name f args file opts]
+(defn trace-fn-call [name f args meta* opts]
   (let [parent (or *trace-log-parent*
                    {:workspace (:cyrik.omni-trace/workspace opts) :parent :root})
         call-id (keyword (gensym ""))
@@ -64,12 +52,12 @@
                 (catch #?(:clj Throwable :cljs :default) t
                   (log (:workspace parent)
                        call-id
-                       {:id call-id :file file :name name :args args :start before-time :end (now) :parent (:parent parent) :inner @inner-result :thrown (#?(:clj Throwable->map :cljs identity) t)}
+                       {:id call-id :meta meta* :name name :args args :start before-time :end (now) :parent (:parent parent) :inner @inner-result :thrown (#?(:clj Throwable->map :cljs identity) t)}
                        opts)
                   (throw t))))]
     (log (:workspace parent)
          call-id
-         {:id call-id :file file :name name :args args :start before-time :end (now) :parent (:parent parent) :return res :inner @inner-result}
+         {:id call-id :meta meta* :name name :args args :start before-time :end (now) :parent (:parent parent) :return res :inner @inner-result}
          opts)
     res))
 
@@ -77,16 +65,19 @@
   (reset! workspace empty-workspace))
 
 
-(defn instrumented [sym v file inner opts]
+(defn instrumented [sym v meta* inner opts]
   (let [to-wrap @v]
     (when (and (fn? to-wrap)
                (not (:macro (meta v)))
                (not (contains? @instrumented-vars v))
+              ;;  (do (println (:name (meta v))) true)
                (not (some #(= % (ns-name (:ns (meta v)))) @ns-blacklist))
                (not= (:name (meta v)) '=) ;;cljs
                (not= (:name (meta v)) 'assoc) ;;cljs
                (not= (:name (meta v)) 'inc) ;;cljs
                (not= (:name (meta v)) 'conj)
+               (not= (:name (meta v)) 'swap!)
+               (not= (:name (meta v)) 'update-in)
                (not= (:name (meta v)) 'map)
                (not= (:name (meta v)) 'first) ;;cljs
                (not= (:name (meta v)) 'apply)) ;;clj
@@ -94,21 +85,21 @@
                      to-wrap)
             instrumented (fn
                            ([]
-                            (trace-fn-call sym to-wrap [] file opts))
+                            (trace-fn-call sym to-wrap [] meta* opts))
                            ([a]
-                            (trace-fn-call sym to-wrap [a] file opts))
+                            (trace-fn-call sym to-wrap [a] meta* opts))
                            ([a b]
-                            (trace-fn-call sym to-wrap [a b] file opts))
+                            (trace-fn-call sym to-wrap [a b] meta* opts))
                            ([a b c]
-                            (trace-fn-call sym to-wrap [a b c] file opts))
+                            (trace-fn-call sym to-wrap [a b c] meta* opts))
                            ([a b c d]
-                            (trace-fn-call sym to-wrap [a b c d] file opts))
+                            (trace-fn-call sym to-wrap [a b c d] meta* opts))
                            ([a b c d e]
-                            (trace-fn-call sym to-wrap [a b c d e] file opts))
+                            (trace-fn-call sym to-wrap [a b c d e] meta* opts))
                            ([a b c d e f]
-                            (trace-fn-call sym to-wrap [a b c d e f] file opts))
+                            (trace-fn-call sym to-wrap [a b c d e f] meta* opts))
                            ([a b c d e f & args]
-                            (trace-fn-call sym to-wrap (into [a b c d e f] args) file opts)))]
+                            (trace-fn-call sym to-wrap (into [a b c d e f] args) meta* opts)))]
         (swap! instrumented-vars assoc v {:orig orig :instrumented instrumented})
         instrumented))))
 
@@ -148,5 +139,5 @@
                   :cljs `(cljs/cljs-uninstrument-ns ~sym-or-syms ~opts uninstrumented)))))
 
 (comment
-(not (some #(= % (ns-name (:ns (meta #'clojure.core//)))) @ns-blacklist))
-)
+  (not (some #(= % (ns-name (:ns (meta #'clojure.core//)))) @ns-blacklist))
+  )

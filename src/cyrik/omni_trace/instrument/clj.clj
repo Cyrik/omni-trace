@@ -2,6 +2,7 @@
   (:require [clojure.tools.reader :as r]
             [clojure.tools.reader.reader-types :as rts]
             clojure.string
+            [clojure.java.io :as io]
             [borkdude.dynaload :as dynaload]
             clojure.repl))
 
@@ -68,7 +69,11 @@
 (defn clj-instrument-fn [sym opts instrumenter]
   (when-let [v (resolve sym)]
     (let [var-name (var->sym v)
-          original @v]
+          original @v
+          file *file*
+          meta* (update (meta v) :file #(if-let [classpath-file (io/resource %)]
+                                         (.getPath classpath-file)
+                                         %))]
       (try
         (when (:inner-trace opts)
           (if (nil? @dbgn-f)
@@ -77,7 +82,7 @@
         (catch ClassNotFoundException e (throw (if (= (.getMessage e) "debux.core")
                                                  (Exception. "added debux to dependencies for :inner-trace")
                                                  e))))
-      (when-let [instrumented-fn (instrumenter var-name v *file* (when (:inner-trace opts) original) opts)]
+      (when-let [instrumented-fn (instrumenter var-name v meta* (when (:inner-trace opts) original) opts)]
         (alter-var-root v (constantly instrumented-fn))
         var-name))))
 
