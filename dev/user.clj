@@ -8,7 +8,8 @@
             [debux.core :as d]
             [clojure.walk :as walk]
             [clojure.tools.namespace.repl]
-            [test-console :as tc]
+            [advent.day1]
+            [clj-memory-meter.core :as mm]
             [zprint.core :as zp]
             [clojure.tools.deps.alpha.repl :as repl]
             [debux.common.util :as ut]
@@ -42,12 +43,12 @@
 (defn test-inc [x]
   (inc x))
 (defn test-log [x]
-  (tc/log x)
   (inc x))
 (test-log 5)
 (defonce portal (p/open))
 (add-tap #'p/submit)
 (comment
+  (portal.runtime/register! (partial into {}) {:name 'dev/->map})
   "https://github.com/Cyrik/omni-trace"
   ;; tracing + visualization + tool integrations
   ;; debug your own code + understand calls into libs
@@ -110,12 +111,11 @@
                    {::o/workspace i/workspace})
 
   (e/run-machine)
-  (zp/zprint (:log @i/workspace))
+
   (o/run-traced 'cyrik.omni-trace.testing-ns/run-machine)
   (tap> (flame/flamedata @i/workspace 'cyrik.omni-trace.testing-ns/run-machine))
   (tap> (o/rooted-flamegraph 'cyrik.omni-trace.testing-ns/run-machine))
   (tap> (o/flamegraph))
-
 
   i/instrumented-vars
 
@@ -142,7 +142,8 @@
   (count (:log @i/workspace))
   (o/reset-workspace!)
   (intern *ns* '~'symname "<<symdefinition>>")
-
+  (dotimes [x 100] (o/run-traced 'cyrik.omni-trace.testing-ns/run-machine))
+  (tap> (o/flamegraph))
   ut/config*
 
   (o/instrument-fn 'user/foo {::o/workspace i/workspace :inner-trace true})
@@ -178,4 +179,5 @@
                 acc
                 (recur (* acc n) (dec n))))))
 
-  .)
+  .
+  )

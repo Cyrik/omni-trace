@@ -4,7 +4,6 @@
             [cyrik.cljs-macroexpand :as macro]
             [portal.console :as console]
             [cyrik.omni-trace.instrument :as i]
-            [test-console :as tc]
             [debux.cs.core :as d]
             [cljs.analyzer :as ana]
             [cyrik.omni-trace.graph :as flame]
@@ -58,7 +57,6 @@
   (macroexpand '(o/instrument-fn 'cyrik.omni-trace.testing-ns/insert-coin))
   (macro/cljs-macroexpand-all '(o/instrument-ns 'portal.web))
   (macro/cljs-macroexpand-all '(o/instrument-fn 'cyrik.omni-trace.testing-ns/insert-coin))
-  (macro/cljs-macroexpand-all '(tc/log 5))
   (alter-meta! (var cyrik.omni-trace.testing-ns/insert-coin) assoc-in [:stuffs] "yeah123")
   (.log js/console (meta (var cyrik.omni-trace.testing-ns/insert-coin)))
 

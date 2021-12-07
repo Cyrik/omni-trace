@@ -1,4 +1,5 @@
-(ns cyrik.omni-trace.portal)
+(ns cyrik.omni-trace.portal
+  (:require [cyrik.omni-trace.instrument :as i]))
 
 (defonce re-run-trace (atom nil))
 (defonce re-run-debug (atom nil))

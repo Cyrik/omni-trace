@@ -1,17 +1,67 @@
 (ns cyrik.omni-trace.graph)
 
+(defn map-kv [f coll]
+  (reduce-kv (fn [m k v] (assoc m k (f v))) (empty coll) coll))
+
 (defn flamedata 
   ([workspace]
-   (into [] (conj (vals (:log workspace)) {:parent nil :name "root" :id :root})))
+   (into [] (conj (->> workspace
+                       :log
+                       vals
+                       (map #(update-in % [:meta :ns] (constantly nil)))) 
+                  {:parent nil :name "root" :id :root})))
   ([workspace root]
-   (->> (vals (:log workspace))
-        (map #(if (= (:name %) root) (assoc % :parent nil) %))
-        (filter #(not= (:parent %) :root)))))
+   (let [str-root (str root)]
+   (->> (:log workspace)
+        (map-kv #(if (= (str(:name  %)) (str root)) (assoc % :parent nil) %))
+        (remove #(= (:parent (second %)) :root))
+        (into {})
+        ((fn [tree] (filter #(or (nil? (:parent (second %))) (contains? tree (:parent (second %)))) tree)))
+        (into {})
+        ((fn [tree] (filter #(or (nil? (:parent (second %))) (contains? tree (:parent (second %)))) tree)))
+        (into {})
+        ((fn [tree] (filter #(or (nil? (:parent (second %))) (contains? tree (:parent (second %)))) tree)))
+        (into {})
+        ((fn [tree] (filter #(or (nil? (:parent (second %))) (contains? tree (:parent (second %)))) tree)))
+        (into {})
+        ((fn [tree] (filter #(or (nil? (:parent (second %))) (contains? tree (:parent (second %)))) tree)))
+        (vals)
+        (map #(update-in % [:meta :ns] (constantly nil)))
+        (map #(update-in % [:meta :tag] (constantly nil)))
+        (map #(update % :args (fn [args] (map (fn [arg] (if (fn? arg) (str arg) arg)) args))))
+        (map #(update-in % [:thrown :trace] (constantly nil)))
+        )))) ;; delete ns info for now, transit explodes with it
+;; cleanup the filter crap
 
+
+(comment
+ (let [root :a
+       tree (->> {:a {:name :a :parent :root}
+                  :c {:name :c :parent :root}
+                  :d {:name :d :parent :c}
+                  :e {:name :e :parent :d}
+                  :f {:name :f :parent :b}
+                  :b {:name :b :parent :a}})]
+    (->> tree
+         (map-kv #(if (= (:name %) root) (assoc % :parent nil) %))
+         (remove #(= (:parent (second %)) :root))
+         (into {})
+         ((fn [tree] (filter #(or (= root (first %)) (contains? tree (:parent (second %)))) tree)))
+         (into {})
+         ((fn [tree] (filter #(or (= root (first %)) (contains? tree (:parent (second %)))) tree)))
+         (into {})
+         ((fn [tree] (filter #(or (= root (first %)) (contains? tree (:parent (second %)))) tree)))
+         (into {})
+         ((fn [tree] (filter #(or (= root (first %)) (contains? tree (:parent (second %)))) tree)))
+         (into {})
+         ((fn [tree] (filter #(or (= root (first %)) (contains? tree (:parent (second %)))) tree)))))
+)
 (defn flamegraph-with-click [data]
   {:title "flame"
    :autosize {:type "fit" :resize false :contains "padding"}
    :padding 30
+   :width 1200
+   :height 1200
    :scales
    [{:name "color"
      :type "ordinal"
@@ -27,16 +77,16 @@
      :on [{:events "mouseover", :source "window", :force true, :update "datum ? datum : null"}]
      :value false}
     {:name "key"
-     :on [{:events {:type "keydown",  :force true, :source "window", :filter "event.key === 'a'"},  
+     :on [{:events {:type "keydown",  :force true, :source "window", :filter "event.key === 'a'"}
            :update "over ? over : null"}]}
     {:name "copy"
-     :on [{:events {:type "keydown",  :force true, :source "window", :filter "event.key === 'c'"},  
+     :on [{:events {:type "keydown",  :force true, :source "window", :filter "event.key === 'c'"}
            :update "over ? over.name : null"}]}
     {:name "definition"
-     :on [{:events {:type "keydown",  :force true, :source "window", :filter "event.key === 'd'"},  
+     :on [{:events {:type "keydown",  :force true, :source "window", :filter "event.key === 'd'"}
            :update "over ? over.meta : null"}]}
     {:name "args"
-     :on [{:events {:type "keydown",  :force true, :source "window", :filter "event.key === 'c'"},  
+     :on [{:events {:type "keydown",  :force true, :source "window", :filter "event.key === 'c'"}
            :update "over ? {traceid: over.id, args:over.args} : null"}]}
     {:name "xdom"
      :update "slice(xext)"
@@ -104,7 +154,7 @@
          throw: datum.thrown,
          return: datum.return}"}}
       :update
-            {:x {:scale "xscale" :field "a0"}
+      {:x {:scale "xscale" :field "a0"}
        :x2 {:scale "xscale" :field "a1"}
        :y {:scale "yscale" :field "r0"}
        :y2 {:scale "yscale" :field "r1"}

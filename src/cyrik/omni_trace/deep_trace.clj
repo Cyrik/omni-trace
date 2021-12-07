@@ -19,21 +19,24 @@
 
 (defn analysis [files]
   (:analysis (clj-kondo/run! {:lint files
+                              :cache true
+                              :parallel true
                               :config {:output {:analysis true}}})))
 
 (defn deps [analysis language] (reduce (fn [graph {:keys [:from :to :filename :row :col :from-var :name]}]
-                                (try (dep/depend graph [from from-var] [to name])
-                                     (catch Exception e
-                                       (let [ed (ex-data e)]
-                                         (if (= :com.stuartsierra.dependency/circular-dependency
-                                                (:reason ed))
-                                           (do #_(println (str filename ":" row ":" col ":")
-                                                        "circular single dependency from var "
-                                                        [from from-var] "to" [to name])
-                                               graph)
-                                           (throw e))))))
-                              (dep/graph)
-                              (filter #(= language (:lang %)) (:var-usages analysis))))
+                                         (try (dep/depend graph [from from-var] [to name])
+                                              (catch Exception e
+                                                (let [ed (ex-data e)]
+                                                  (if (= :com.stuartsierra.dependency/circular-dependency
+                                                         (:reason ed))
+                                                    (do #_(println (str filename ":" row ":" col ":")
+                                                                   "circular single dependency from var "
+                                                                   [from from-var] "to" [to name])
+                                                        graph)
+                                                    (throw e))))))
+                                       (dep/graph)
+                                       (filter #(or (= language (:lang %))
+                                                    (nil? (:lang %))) (:var-usages analysis))))
 
 (defn transitive-deps [deps ns sym]
   (conj (dep/transitive-dependencies deps [ns sym]) [ns sym]))
@@ -46,6 +49,13 @@
   (let [deps (deps (analysis ["dev" "src"] #_(classpaths)) :clj)
         deep-deps (transitive-deps deps ns sym)]
     (apply-instrumenter deep-deps instrumenter)
+    [deps deep-deps]))
+
+(defn deep-trace-debug* [s & args]
+  (let [ns (symbol (namespace s))
+        s (symbol (name s))
+        deps (deps (analysis ["dev" "src"] #_(classpaths)) :clj)
+        deep-deps (transitive-deps deps ns s)]
     [deps deep-deps]))
 
 (defn deep-trace [ns sym]
@@ -72,9 +82,10 @@
   (deep-trace* 'cyrik.omni-trace.testing-ns 'run-machine #())
   (time (def analysis (clj-kondo/run! {:parallel true
                                        :cache true
-                                       :lint ["/Users/lukas/Workspace/clojure/omni-trace/src"]
+                                       :lint ["dev"]
                                        :config {:output {:analysis true}}})))
 
+  (filter #(= "dev/advent/day1.clj" (:filename %))(:var-usages (analysis ["dev"] #_(classpaths))))
 
 
   (keys analysis)

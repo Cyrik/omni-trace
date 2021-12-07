@@ -73,6 +73,8 @@ It then runs the function with any supplied args and untraces everything. This r
 
 ![Screenshot](docs/deep-trace.png)
 
+If your deeptraced function only traced itself make sure it's namespace is required somewhere inside "src" or "dev".
+I will add more options for choosing namespaces later.
 Currently there are still a few problems with recursion, will have to rewrite the deps graph for it. 
 I'm guessing a lot of code will stil explode when allowing clojure.core trace, since the tracing code itself uses those.
 Will probably cleanup the blacklist and try to use local function copies for tracing.
