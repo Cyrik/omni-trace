@@ -1,7 +1,24 @@
-(ns cyrik.omni-trace.graph)
+(ns cyrik.omni-trace.graph
+  (:require [com.stuartsierra.dependency :as dep]))
 
-(defn map-kv [f coll]
-  (reduce-kv (fn [m k v] (assoc m k (f v))) (empty coll) coll))
+(defn- contains-in?
+  [m ks]
+  (not= ::absent (get-in m ks ::absent)))
+
+(defn- update-in-if-contains [m ks f & args]
+  (if (contains-in? m ks)
+    (apply (partial update-in m ks f) args)
+    m))
+
+(defn rooted-dependents [parent nodes]
+  (conj (dep/transitive-dependents (reduce (fn [graph trace]
+                                             (if (or (nil? (:parent trace)) (= :root (:parent trace)))
+                                               graph
+                                               (dep/depend graph trace ((:parent trace) nodes))))
+                                           (dep/graph)
+                                           (vals nodes))
+                                   parent)
+        parent))
 
 (defn flamedata 
   ([workspace]
@@ -11,50 +28,36 @@
                        (map #(update-in % [:meta :ns] (constantly nil)))) 
                   {:parent nil :name "root" :id :root})))
   ([workspace root]
-   (let [str-root (str root)]
-   (->> (:log workspace)
-        (map-kv #(if (= (str(:name  %)) (str root)) (assoc % :parent nil) %))
-        (remove #(= (:parent (second %)) :root))
-        (into {})
-        ((fn [tree] (filter #(or (nil? (:parent (second %))) (contains? tree (:parent (second %)))) tree)))
-        (into {})
-        ((fn [tree] (filter #(or (nil? (:parent (second %))) (contains? tree (:parent (second %)))) tree)))
-        (into {})
-        ((fn [tree] (filter #(or (nil? (:parent (second %))) (contains? tree (:parent (second %)))) tree)))
-        (into {})
-        ((fn [tree] (filter #(or (nil? (:parent (second %))) (contains? tree (:parent (second %)))) tree)))
-        (into {})
-        ((fn [tree] (filter #(or (nil? (:parent (second %))) (contains? tree (:parent (second %)))) tree)))
-        (vals)
-        (map #(update-in % [:meta :ns] (constantly nil)))
-        (map #(update-in % [:meta :tag] (constantly nil)))
-        (map #(update % :args (fn [args] (map (fn [arg] (if (fn? arg) (str arg) arg)) args))))
-        (map #(update-in % [:thrown :trace] (constantly nil)))
-        )))) ;; delete ns info for now, transit explodes with it
+   (let [str-root (str root)
+         [id-root trace-root] (some (fn [[k v]] (when (= (str (:name  v)) str-root) [k (assoc v :parent nil)])) (:log workspace))
+         traces (assoc (:log workspace) id-root trace-root)]
+     (->> traces
+          (rooted-dependents trace-root)
+          (map #(update-in-if-contains % [:meta :ns] (constantly nil)))
+          (map #(update-in-if-contains % [:meta :tag] (constantly nil)))
+          (map #(update-in-if-contains % [:args] (fn [args] (map (fn [arg] (if (fn? arg) (str arg) arg)) args))))
+          (map #(update-in-if-contains % [:thrown :trace] (constantly nil))))))) ;; delete ns info for now, transit explodes with it
 ;; cleanup the filter crap
 
 
 (comment
+  (def test-nodes  {:a {:name :a :parent :root}
+                    :c {:name :c :parent :root}
+                    :d {:name :d :parent :c}
+                    :e {:name :e :parent :d}
+                    :f {:name :f :parent :b}
+                    :b {:name :b :parent :a}})
+  (rooted-dependents {:name :a :parent :root} test-nodes)
+  (flamedata {:log test-nodes} :a)
  (let [root :a
-       tree (->> {:a {:name :a :parent :root}
-                  :c {:name :c :parent :root}
-                  :d {:name :d :parent :c}
-                  :e {:name :e :parent :d}
-                  :f {:name :f :parent :b}
-                  :b {:name :b :parent :a}})]
-    (->> tree
-         (map-kv #(if (= (:name %) root) (assoc % :parent nil) %))
-         (remove #(= (:parent (second %)) :root))
-         (into {})
-         ((fn [tree] (filter #(or (= root (first %)) (contains? tree (:parent (second %)))) tree)))
-         (into {})
-         ((fn [tree] (filter #(or (= root (first %)) (contains? tree (:parent (second %)))) tree)))
-         (into {})
-         ((fn [tree] (filter #(or (= root (first %)) (contains? tree (:parent (second %)))) tree)))
-         (into {})
-         ((fn [tree] (filter #(or (= root (first %)) (contains? tree (:parent (second %)))) tree)))
-         (into {})
-         ((fn [tree] (filter #(or (= root (first %)) (contains? tree (:parent (second %)))) tree)))))
+       tree (->> test-nodes)]
+   
+   (dep/transitive-dependents (reduce (fn [graph trace]
+             (if (= :root (:parent trace))
+               graph
+               (dep/depend graph trace ((:parent trace) tree))))
+           (dep/graph)
+           (vals tree)) (root tree)))
 )
 (defn flamegraph-with-click [data]
   {:title "flame"
