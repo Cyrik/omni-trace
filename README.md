@@ -54,6 +54,8 @@ or just through github source:
 
 ![Screenshot](docs/demo.gif)
 
+[Example "real world" usage story](https://cyrik.github.io/day1.html) (Spoilers for Advent of Code 2021 Day1)
+
 ## experimental deeptrace
 
 ```clojure
