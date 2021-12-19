@@ -1,13 +1,12 @@
 # omni-trace
 Omnipotent/omniscient tracing core for debugging clojure(script)
 
-very early alpha, api is still unstable but its only for dev time so there shouldn't be any problems.
-moved namespaces to cyrik.omni-trace and below. cyrik.omni-trace is the main entry point.
+alpha, api is still unstable but its only for dev time so there shouldn't be any problems.
 
 
 [![Clojars Project](https://img.shields.io/clojars/v/org.clojars.cyrik/omni-trace.svg)](https://clojars.org/org.clojars.cyrik/omni-trace)
 
-or just through github source: 
+or just through github source:
 
 ```clojure
 
@@ -31,7 +30,9 @@ or just through github source:
 
 (comment
   ;instrument a namespace
-  (o/instrument-ns 'cyrik.omni-trace.testing-ns)
+  (o/trace 'cyrik.omni-trace.testing-ns)
+  ;; (o/trace ['cyrik.omni-trace.testing-ns])
+  ;; (o/trace ["cyrik.omni-trace.testing-ns"])
   ;run functions in that namespace
   (-> e/machine-init
       (e/insert-coin :quarter)
@@ -54,6 +55,7 @@ or just through github source:
 ![Screenshot](docs/demo.gif)
 
 ## experimental deeptrace
+
 ```clojure
 (require '[cyrik.omni-trace :as o])
 
@@ -68,8 +70,8 @@ or just through github source:
 ```
 
 This uses [clj-kondo](https://github.com/clj-kondo/clj-kondo) to find all transitive calls from the provided symbol.
-It then runs the function with any supplied args and untraces everything. This reaches all the way down into clojure.core.
-
+It then runs the function with any supplied args and untraces everything.
+This reaches all the way down into clojure.core.
 
 ![Screenshot](docs/deep-trace.png)
 
@@ -80,12 +82,15 @@ I'm guessing a lot of code will stil explode when allowing clojure.core trace, s
 Will probably cleanup the blacklist and try to use local function copies for tracing.
 
 ## experimental inner-trace
+
 get the WIP debux version:
+
 ```
 :debux-src {:extra-deps {philoskim/debux
                                     {:git/url "https://github.com/Cyrik/debux.git"
                                      :sha "a957ee863f08551d4c0a0adad85c501976c36ef2"}}}
 ```
+
 ```clojure
 (require '[cyrik.omni-trace :as o])
 (require '[cyrik.omni-trace.instrument :as i])
@@ -162,6 +167,7 @@ get the WIP debux version:
    :end 1638382991968}},
  :max-callsites #{}}
 ```
+
 works pretty well already, but:
 
 - works in clj only for now, working on cljs
@@ -170,18 +176,16 @@ works pretty well already, but:
 - api very unstable
 - no good way to display it
 
+## Features
 
-
-
-# Features
 - Works in clojure and clojurescript
 - Instrument whole namespaces from the repl
 - show the trace as a Flamegraph in Portal or anything else that understands Vega.js
 - remembers the call that caused the exception and shows the arguments
 - stops tracing callsites if they have been called to often, default is 100, can be changed with :omni-trace.omni-trace/max-callsite-log option
 
+## In the works
 
-# In the works
 - loads of cleanup of api and code
 - better trace output to the REPL
 - performance
@@ -189,7 +193,8 @@ works pretty well already, but:
 - (maybe) timetravel in trace
 - [Calva](https://github.com/BetterThanTomorrow/calva/) integration to display traces inline
 
-# Related works
+## Related works
+
 - [Debux](https://github.com/philoskim/debux): tracing library that show what is going on inside of a function call. Hopefully this can be integrated as the "inner" function trace in omni-trace
 - [Sayid](https://github.com/clojure-emacs/sayid/): clojure only version of what omni-trace is trying to do
 - [Postmortem](https://github.com/athos/Postmortem): great library for debugging dataflow

@@ -3,8 +3,6 @@
 
  :log {:level :debug}
  :deps     {:aliases [:cljs :dev :shadow-cljs]}
-;;  :deps-aliases [:cider]
-;;  :deps true
 
  :open-file-command
  ["code" :pwd "--goto" ["%s:%s:%s" :file :line :column]]

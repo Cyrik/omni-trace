@@ -1,7 +1,7 @@
 (ns cyrik.omni-trace.instrument.clj
   (:require [clojure.tools.reader :as r]
             [clojure.tools.reader.reader-types :as rts]
-            clojure.string
+            [clojure.string :as string]
             [clojure.java.io :as io]
             [borkdude.dynaload :as dynaload]
             clojure.repl))
@@ -56,24 +56,47 @@
     (eval form)))
 
 (defn var->sym [v]
-  (let [meta (meta v)]
-    (symbol (name (ns-name (:ns meta))) (name (:name meta)))))
+  (let [m (meta v)]
+    (symbol (name (ns-name (:ns m))) (name (:name m)))))
+
+(defn ->var [something]
+  (cond
+    (var? something) something
+    (symbol? something) (resolve something)
+    (string? something) (resolve (symbol something))
+    :else nil))
+
+(defn ->sym [something]
+  (cond
+    (symbol? something) something
+    (var? something) (var->sym something)
+    (string? something) (symbol something)
+    :else nil))
+
+(defn ->ns [something]
+  (cond
+    (instance? clojure.lang.Namespace something) something
+    (symbol? something) (find-ns something)
+    (string? something) (find-ns (symbol something))
+    :else nil))
+
+(defn fully-qualified [s]
+  (var->sym (resolve s)))
 
 (defn vars-in-ns-clj [sym]
   (if (find-ns sym)
     (for [[_ v] (ns-interns sym)
           :when (not (:macro (meta v)))]
       (var->sym v))
-    []))
+    (throw (Exception. (str "ns " sym " does not exist.")))))
 
-(defn clj-instrument-fn [sym opts instrumenter]
-  (when-let [v (resolve sym)]
+(defn clj-instrument-fn [f opts instrumenter]
+  (when-let [v (->var f)]
     (let [var-name (var->sym v)
           original @v
-          file *file*
           meta* (update (meta v) :file #(if-let [classpath-file (io/resource %)]
-                                         (.getPath classpath-file)
-                                         %))]
+                                          (.getPath classpath-file)
+                                          %))]
       (try
         (when (:inner-trace opts)
           (if (nil? @dbgn-f)
@@ -86,16 +109,31 @@
         (alter-var-root v (constantly instrumented-fn))
         var-name))))
 
-(defn clj-instrument-ns [ns-sym opts mapper instrumenter]
+(defn instrument-syms [sym-or-syms opts instrumenter]
+  (let [syms (if (coll? sym-or-syms) sym-or-syms [sym-or-syms])]
+    (mapv (fn [sym] (clj-instrument-fn sym opts instrumenter)) syms)))
+
+(defn clj-instrument-ns [ns-sym opts instrumenter]
   (->> ns-sym
+       ->sym
        vars-in-ns-clj
        (filter symbol?)
        (distinct)
-       (mapv (fn [sym] (mapper sym opts instrumenter)))
+       ((fn [syms] (instrument-syms syms opts instrumenter)))
        (remove nil?)))
 
+(defn instrument [s opts instrumenter]
+  (let [xs (if (coll? s) s [s])
+        syms (map #(->sym %) xs)]
+    (mapcat #(if (string/includes? (name %) ".")
+               (clj-instrument-ns % opts instrumenter)
+               (instrument-syms [%] opts instrumenter))
+            syms)))
+
 (comment
-  (user/test-inc 1)
-  (deref ut/result*)
-  (ut/trace!)
+  (-> #'cyrik.omni-trace.instrument.clj/fully-qualified-sym str symbol)
+  (instance? clojure.lang.Namespace (->ns "cyrik.omni-trace.testing-ns"))
+  (->var "cyrik.omni-trace.testing-ns/insert-coin")
+
+  (type cyrik.omni-trace.testing-ns/insert-coin)
   )

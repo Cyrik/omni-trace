@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+
+clojure -A:nvd -m nvd.task.check "" '"'$(clojure -Spath -A:dev)'"'

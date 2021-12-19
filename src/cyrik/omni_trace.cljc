@@ -44,6 +44,28 @@
   ([sym opts]
    `(i/uninstrument-ns ~sym ~opts)))
 
+(defmacro trace
+  "Instruments all functions in passed namespaces or symbols.
+   syms can be a fully qualified symbol, a string or a var pointing to a namespace
+   or a function. A vector of syms can also be passed.
+   (instrument ['cyrik.omni-trace.testing-ns])"
+  ([syms]
+   `(i/instrument ~syms))
+  ([syms opts]
+   `(i/instrument ~syms ~opts)))
+
+(defmacro untrace
+  "Instruments all functions in passed namespaces or symbols.
+   syms can be a fully qualified symbol, a string or a var pointing to a namespace
+   or a function. A vector of syms can also be passed.
+   (uninstrument 'cyrik.omni-trace.testing-ns)"
+  ([]
+   `(i/uninstrument))
+  ([syms]
+   `(i/uninstrument ~syms))
+  ([syms opts]
+   `(i/uninstrument ~syms ~opts)))
+
 (defn reset-workspace!
   ([]
    (i/reset-workspace! i/workspace))

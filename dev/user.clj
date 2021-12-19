@@ -13,10 +13,12 @@
             [zprint.core :as zp]
             [clojure.tools.deps.alpha.repl :as repl]
             [debux.common.util :as ut]
+            [clj-async-profiler.core :as prof]
             [clojure.pprint :as pprint]
-            [cyrik.omni-trace.graph :as flame]))
+            [cyrik.omni-trace.graph :as flame])
+  (:import (org.openjdk.jol.info ClassLayout GraphLayout)))
 
-(repl/add-libs '{org.clojure/tools.namespace {:mvn/version "1.1.0"}})
+(repl/add-libs '{com.rpl/specter {:mvn/version "1.1.3"}})
 (defn spit-pretty!
   "Writes the pretty-printed edn `data` into the `file`."
   [file data]
@@ -45,7 +47,7 @@
 (defn test-log [x]
   (inc x))
 (test-log 5)
-(defonce portal (p/open))
+(defonce portal (p/open {:portal.launcher/window-title (System/getProperty "user.dir")}))
 (add-tap #'p/submit)
 (comment
   (portal.runtime/register! (partial into {}) {:name 'dev/->map})
@@ -107,6 +109,7 @@
   ;; - deep-trace into core with fewer problems
 
 
+  
   (o/instrument-ns 'cyrik.omni-trace.testing-ns
                    {::o/workspace i/workspace})
 
@@ -142,7 +145,32 @@
   (count (:log @i/workspace))
   (o/reset-workspace!)
   (intern *ns* '~'symname "<<symdefinition>>")
-  (dotimes [x 100] (o/run-traced 'cyrik.omni-trace.testing-ns/run-machine))
+  (prof/serve-files 8888)
+  (reset! i/ns-blacklist [])
+  (prof/profile {:width 2400}
+                (dotimes [x 100] (o/run-traced 'cyrik.omni-trace.testing-ns/run-machine)))
+  (reset! i/ns-blacklist ['cljs.core 'clojure.core])
+  (prof/profile {:width 2400}
+                (dotimes [x 100] (o/run-traced 'cyrik.omni-trace.testing-ns/run-machine)))
+  (o/instrument-ns 'cyrik.omni-trace.testing-ns)
+  (prof/profile {:width 2400}
+                (dotimes [x 10000] (cyrik.omni-trace.testing-ns/run-machine)))
+
+  (mm/measure  (->> @i/workspace
+                    :log
+                    (map #(update-in (second %) [:meta :ns] (constantly nil)))
+                    (into [])))
+  (mm/measure {:end 1638931833800
+               :id :39033
+               :inner []
+               :parent :39032
+               :return true
+               :start 1638931833800})
+  (println (.toFootprint (GraphLayout/parseInstance  (->> @i/workspace
+                                                          :log
+                                                          (map #(update-in (second %) [:meta :ns] (constantly nil)))
+                                                          into-array))))
+
   (tap> (o/flamegraph))
   ut/config*
 

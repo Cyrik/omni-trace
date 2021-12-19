@@ -22,7 +22,7 @@
   (inc x))
 
 
-(defonce portal (p/open))
+(defonce portal (p/open ))
 (add-tap #'p/submit)
 
 (comment
@@ -42,9 +42,7 @@
       (e/retrieve-change-returned)) ;; this is supposed to throw to show exception handling in omni-trace
   ;look at traces for every function that was traced
   @i/workspace
-  ;connect to portal
-
-  (add-tap print)
+  
   ;send the trace to portal as a vegajs flamegraph
   (tap> (flame/flamegraph (flame/flamedata @i/workspace)))
   (tap> ^{:portal.viewer/default :portal.viewer/hiccup} [:button {:onclick (str "alert('123')")} (str "alert('123')")])
@@ -57,6 +55,9 @@
   (macroexpand '(o/instrument-fn 'cyrik.omni-trace.testing-ns/insert-coin))
   (macro/cljs-macroexpand-all '(o/instrument-ns 'portal.web))
   (macro/cljs-macroexpand-all '(o/instrument-fn 'cyrik.omni-trace.testing-ns/insert-coin))
+  (macro/cljs-macroexpand-all '(o/instrument 'cyrik.omni-trace.testing-ns/insert-coin))
+  (macro/cljs-macroexpand-all '(i/uninstrument))
+  (i/uninstrument)
   (alter-meta! (var cyrik.omni-trace.testing-ns/insert-coin) assoc-in [:stuffs] "yeah123")
   (.log js/console (meta (var cyrik.omni-trace.testing-ns/insert-coin)))
 

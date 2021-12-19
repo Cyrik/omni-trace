@@ -6,5 +6,10 @@
            :focus-meta [:debux]
            :test-paths ["test/unit"]}
           {:id         :features
-           :test-paths ["test/features"]}]
+           :test-paths ["test/features"]}
+          {:id :unit-cljs
+           :type :kaocha.type/cljs
+           :skip-meta [:debux]
+           :test-paths ["test/unit"]
+           }]
   :plugins [:kaocha.plugin/print-invocations]}

@@ -33,7 +33,9 @@
 (defn log [workspace id trace opts]
   (if (< (get (:call-sites @workspace) (callsite trace) 0)
          (get opts :cyrik.omni-trace/max-callsite-log default-callsite-log))
-    (do (swap! workspace assoc-in [:log id] trace)
+    (do (swap! workspace (fn [old] (-> old
+                                       (update-in [:log id] merge trace)
+                                       (update-in [:log (:parent trace) :children] (fn [children] ((fnil conj []) children id))))))
         (swap! workspace update-in [:call-sites (callsite trace)] (fnil inc 0)))
     (swap! workspace assoc :maxed-callsites (callsite trace))))
 
@@ -127,7 +129,7 @@
     ([sym-or-syms]
      `(instrument-ns ~sym-or-syms {:cyrik.omni-trace/workspace workspace}))
     ([sym-or-syms opts]
-     (macros/case :clj `(clj/clj-instrument-ns ~sym-or-syms ~opts clj/clj-instrument-fn instrumented)
+     (macros/case :clj `(clj/clj-instrument-ns ~sym-or-syms ~opts instrumented)
                   :cljs `(cljs/cljs-instrument-ns ~sym-or-syms ~opts instrumented))))
 
   (defmacro uninstrument-ns
@@ -135,9 +137,40 @@
     ([sym-or-syms]
      `(uninstrument-ns ~sym-or-syms {:cyrik.omni-trace/workspace workspace}))
     ([sym-or-syms opts]
-     (macros/case :clj `(clj/clj-instrument-ns ~sym-or-syms ~opts clj/clj-instrument-fn uninstrumented)
-                  :cljs `(cljs/cljs-uninstrument-ns ~sym-or-syms ~opts uninstrumented)))))
+     (macros/case :clj `(clj/clj-instrument-ns ~sym-or-syms ~opts uninstrumented)
+                  :cljs `(cljs/cljs-uninstrument-ns ~sym-or-syms ~opts uninstrumented))))
+  
+  (defmacro instrument
+    ([sym-or-syms]
+     `(instrument ~sym-or-syms {:cyrik.omni-trace/workspace workspace}))
+    ([sym-or-syms opts]
+     (macros/case :clj `(clj/instrument ~sym-or-syms ~opts instrumented)
+                  :cljs `(cljs/instrument ~sym-or-syms ~opts instrumented))))
+  
+  (defmacro uninstrument
+    ([]
+     (macros/case :clj `(uninstrument ~(into [] (keys @instrumented-vars)))
+                  :cljs `(uninstrument [])))
+    ([sym-or-syms]
+     `(uninstrument ~sym-or-syms {:cyrik.omni-trace/workspace workspace}))
+    ([sym-or-syms opts]
+     (macros/case :clj `(clj/instrument ~sym-or-syms ~opts uninstrumented)
+                  :cljs `(cljs/uninstrument ~sym-or-syms ~opts uninstrumented)))))
 
 (comment
+  (reset! instrumented-vars {})
+  (require '[cyrik.cljs-macroexpand :as macro])
+
+  (macro/cljs-macroexpand-all '(cljs/instrument ['cyrik.omni-trace.testing-ns `same-callsite?] {} instrumented))
+  (cljs/instrument ['cyrik.omni-trace.testing-ns `same-callsite?] {} instrumented)
+  (cljs/instrument `same-callsite? {} instrumented)
+  (cljs/uninstrument ['cyrik.omni-trace.testing-ns `same-callsite?] {} uninstrumented)
+  (macroexpand-1 '(cljs/uninstrument [] {} uninstrumented))
+  (cljs/uninstrument [] {} uninstrumented)
+  (instrument ['cyrik.omni-trace.testing-ns `same-callsite?])
+  (cyrik.omni-trace.instrument/instrument #'same-callsite?)
+  (cyrik.omni-trace.instrument/uninstrument)
+  instrumented-vars
+  (clj/clj-instrument-ns 'cyrik.omni-trace.testing-ns {} uninstrumented)
   (not (some #(= % (ns-name (:ns (meta #'clojure.core//)))) @ns-blacklist))
   )

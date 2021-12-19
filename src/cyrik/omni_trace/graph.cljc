@@ -1,5 +1,6 @@
 (ns cyrik.omni-trace.graph
-  (:require [com.stuartsierra.dependency :as dep]))
+  (:require [com.stuartsierra.dependency :as dep]            
+            [cyrik.omni-trace.tree :as tree]))
 
 (defn- contains-in?
   [m ks]
@@ -25,6 +26,8 @@
    (into [] (conj (->> workspace
                        :log
                        vals
+                       (filter :id)
+                       (map #(dissoc % :children))
                        (map #(update-in % [:meta :ns] (constantly nil)))) 
                   {:parent nil :name "root" :id :root})))
   ([workspace root]
@@ -32,9 +35,12 @@
          [id-root trace-root] (some (fn [[k v]] (when (= (str (:name  v)) str-root) [k (assoc v :parent nil)])) (:log workspace))
          traces (assoc (:log workspace) id-root trace-root)]
      (->> traces
-          (rooted-dependents trace-root)
+          ;; (rooted-dependents trace-root)
+          (tree/dependants root)
+          (filter :id)
           (map #(update-in-if-contains % [:meta :ns] (constantly nil)))
           (map #(update-in-if-contains % [:meta :tag] (constantly nil)))
+          (map #(dissoc % :children))
           (map #(update-in-if-contains % [:args] (fn [args] (map (fn [arg] (if (fn? arg) (str arg) arg)) args))))
           (map #(update-in-if-contains % [:thrown :trace] (constantly nil))))))) ;; delete ns info for now, transit explodes with it
 ;; cleanup the filter crap
@@ -48,6 +54,8 @@
                     :f {:name :f :parent :b}
                     :b {:name :b :parent :a}})
   (rooted-dependents {:name :a :parent :root} test-nodes)
+  (rooted-dependents {:name :a :parent :root} (:log @cyrik.omni-trace.instrument/workspace))
+  (tree/dependants :a test-nodes)
   (flamedata {:log test-nodes} :a)
  (let [root :a
        tree (->> test-nodes)]
@@ -231,5 +239,5 @@
 
 (defn flamegraph [data]
   (-> (flamegraph-with-click data)
-      (assoc :portal-opts [{:signal "definition" :command 'example.core/goto-definition}
+      (assoc :portal-opts [{:signal "definition" :command 'user/goto-definition}
                            {:signal "args" :command 'cyrik.omni-trace/re-run}])))
