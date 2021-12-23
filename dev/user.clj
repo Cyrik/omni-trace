@@ -57,7 +57,7 @@
 
   ;; run-traced
   (o/reset-workspace!)
-  (o/run-traced 'cyrik.omni-trace.testing-ns/run-machine)
+  (o/run (cyrik.omni-trace.testing-ns/run-machine))
   (tap> (o/flamegraph))
   (o/reset-workspace!)
 
@@ -72,7 +72,7 @@
 
   ;; deep into core
   (reset! i/ns-blacklist [])
-  (o/run-traced 'cyrik.omni-trace.testing-ns/run-machine)
+  (o/run (cyrik.omni-trace.testing-ns/run-machine))
   (tap> (o/flamegraph))
   (o/reset-workspace!)
   (reset! i/ns-blacklist ['cljs.core 'clojure.core])

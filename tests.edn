@@ -10,6 +10,6 @@
           {:id :unit-cljs
            :type :kaocha.type/cljs
            :skip-meta [:debux]
-           :test-paths ["test/unit"]
+           :test-paths ["test/unit" "test/features"]
            }]
   :plugins [:kaocha.plugin/print-invocations]}

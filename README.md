@@ -1,8 +1,7 @@
 # omni-trace
 Omnipotent/omniscient tracing core for debugging clojure(script)
 
-alpha, api is still unstable but its only for dev time so there shouldn't be any problems.
-
+beta, api is still unstable but its only for dev time so there shouldn't be any problems.
 
 [![Clojars Project](https://img.shields.io/clojars/v/org.clojars.cyrik/omni-trace.svg)](https://clojars.org/org.clojars.cyrik/omni-trace)
 
@@ -56,7 +55,7 @@ or just through github source:
 
 [Example "real world" usage story](https://cyrik.github.io/day1.html) (Spoilers for Advent of Code 2021 Day1)
 
-## experimental deeptrace
+## Deeptrace
 
 ```clojure
 (require '[cyrik.omni-trace :as o])
@@ -64,7 +63,7 @@ or just through github source:
 ;; uncomment to also trace clojure.core, tested with testing-ns only
 ;; (require '[cyrik.omni-trace.instrument :as i])
 ;; (reset! i/ns-blacklist [])
-(o/run-traced 'cyrik.omni-trace.testing-ns/run-machine)
+(o/run (cyrik.omni-trace.testing-ns/run-machine))
 
 ;; run this for cljs
 ;; (o/run-traced-cljs 'cyrik.omni-trace.testing-ns/run-machine)
@@ -73,14 +72,14 @@ or just through github source:
 
 This uses [clj-kondo](https://github.com/clj-kondo/clj-kondo) to find all transitive calls from the provided symbol.
 It then runs the function with any supplied args and untraces everything.
-This reaches all the way down into clojure.core.
+This reaches all the way down into clojure.core if you remove the blacklist.
 
 ![Screenshot](docs/deep-trace.png)
 
 If your deeptraced function only traced itself make sure it's namespace is required somewhere inside "src" or "dev".
 I will add more options for choosing namespaces later.
 Currently there are still a few problems with recursion, will have to rewrite the deps graph for it. 
-I'm guessing a lot of code will stil explode when allowing clojure.core trace, since the tracing code itself uses those.
+I'm guessing a lot of code will still explode when allowing clojure.core trace, since the tracing code itself, uses those.
 Will probably cleanup the blacklist and try to use local function copies for tracing.
 
 ## experimental inner-trace
@@ -188,7 +187,6 @@ works pretty well already, but:
 
 ## In the works
 
-- loads of cleanup of api and code
 - better trace output to the REPL
 - performance
 - callbacks from Portal so you can rerun an updated function with the old params by clicking on it in the Flamegraph

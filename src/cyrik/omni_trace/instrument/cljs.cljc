@@ -53,7 +53,7 @@
       (let [var-name (:name v)
             file (get-file &env (or (:file (:meta v))
                                     (:file v)));;incase of jar?
-            meta* (assoc (:meta v) :file file)]
+            meta* (select-keys (assoc (:meta v) :file file) [:column :line :file])]
         (when-not (:macro v)
           (swap! instrumented-var-names conj var-name)
           `(when-let [instrumented# (~instrumenter '~sym (var ~sym) ~meta* nil ~opts)]
@@ -65,7 +65,7 @@
       (let [var-name (:name v)
             file (get-file &env (or (:file (:meta v))
                                     (:file v)));;incase of jar?
-            meta* (assoc (:meta v) :file file)]
+            meta* (select-keys (assoc (:meta v) :file file) [:column :line :file])]
         (when-not (:macro v)
           (swap! instrumented-var-names disj var-name)
           `(when-let [instrumented# (~instrumenter '~sym (var ~sym) ~meta* nil ~opts)]
@@ -120,6 +120,7 @@
 
 (comment
   (require '[cyrik.cljs-macroexpand :as macro])
+  (reset! instrumented-var-names #{})
   (cyrik.omni-trace.instrument.cljs/sym-test "cljs.core/inc")
   (macro/cljs-macroexpand-all '(cyrik.omni-trace.instrument.cljs/instrument ["cyrik.omni-trace.testing-ns" #'cljs.core/inc] {} #()))
   (instrument "cyrik.omni-trace.testing-ns"  {} #())

@@ -110,8 +110,18 @@
    (throw #?(:cljs (js/Error. "Oops") :clj (Exception. "Oops")))
    (dissoc machine :change-returned)])
 
-(defn run-machine []
-  (-> machine-init
+(defn run-machine
+  ([]
+   (-> machine-init
+       (insert-coin :quarter)
+       (insert-coin :dime)
+       (insert-coin :nickel)
+       (insert-coin :penny)
+       (press-button :a1)))
+  )
+(defn run-machine-with
+  [start]
+  (-> start
       (insert-coin :quarter)
       (insert-coin :dime)
       (insert-coin :nickel)
