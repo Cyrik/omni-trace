@@ -30,14 +30,14 @@
 
 (defn same-callsite? [trace1 trace2]
   (= (callsite trace1) (callsite trace2)))
-(defn log [workspace id trace opts]
-  (if (< (get (:call-sites @workspace) (callsite trace) 0)
+(defn log [ws id trace opts]
+  (if (< (get (:call-sites @ws) (callsite trace) 0)
          (get opts :cyrik.omni-trace/max-callsite-log default-callsite-log))
-    (do (swap! workspace (fn [old] (-> old
+    (do (swap! ws (fn [old] (-> old
                                        (update-in [:log id] merge trace)
                                        (update-in [:log (:parent trace) :children] (fn [children] ((fnil conj []) children id))))))
-        (swap! workspace update-in [:call-sites (callsite trace)] (fnil inc 0)))
-    (swap! workspace assoc :maxed-callsites (callsite trace))))
+        (swap! ws update-in [:call-sites (callsite trace)] (fnil inc 0)))
+    (swap! ws assoc :maxed-callsites (callsite trace))))
 
 (defn trace-fn-call [name f args meta* opts]
   (let [parent (or *trace-log-parent*
@@ -85,7 +85,8 @@
                (not= (:name (meta v)) 'apply)) ;;clj
       (let [orig (or inner
                      to-wrap)
-            instrumented (fn
+            ;; this exists for cljs, should be pulled out
+            instrumented* (fn
                            ([]
                             (trace-fn-call sym to-wrap [] meta* opts))
                            ([a]
@@ -102,8 +103,8 @@
                             (trace-fn-call sym to-wrap [a b c d e f] meta* opts))
                            ([a b c d e f & args]
                             (trace-fn-call sym to-wrap (into [a b c d e f] args) meta* opts)))]
-        (swap! instrumented-vars assoc v {:orig orig :instrumented instrumented})
-        instrumented))))
+        (swap! instrumented-vars assoc v {:orig orig :instrumented instrumented*})
+        instrumented*))))
 
 (defn uninstrumented [sym v file inner opts]
   (when-let [wrapped (@instrumented-vars v)]

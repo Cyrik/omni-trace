@@ -1,0 +1,5 @@
+{:customREPLCommandSnippets
+ [{:name "omni-trace run and graph"
+   :key "r"
+   :snippet "(require '[cyrik.omni-trace])(cyrik.omni-trace/run $current-form)(tap> (cyrik.omni-trace/flamegraph))(cyrik.omni-trace/reset-workspace!)"}]}
+

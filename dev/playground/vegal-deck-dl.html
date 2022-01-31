@@ -1,0 +1,1284 @@
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>vega-deck.gl test</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script src="https://unpkg.com/vega@^5.11/build/vega.js" charset="utf-8"></script>
+  <script src="https://unpkg.com/deck.gl@~8.3.7/dist.min.js"></script>
+  <script src="https://unpkg.com/@msrvida/vega-deck.gl@^3/dist/umd/vega-deck.gl.js"></script>
+  <link rel="stylesheet" href="vega-deck.css" />
+</head>
+
+<body class="columns">
+  <div id="vis"></div>
+  <script type="text/javascript">
+    VegaDeckGl.use(vega, deck, deck, luma);
+    var chartSpec1 = {
+      "$schema": "https://vega.github.io/schema/vega/v3.json",
+      "width": 400,
+      "height": 400,
+      "padding": 5,
+      "title": "blah blah blah blah blah blah blah blah blah",
+
+      "data": [
+        {
+          "name": "table",
+          "values": [
+            { "x": 2000, "y": 0.28 },
+            { "x": 2000.5, "y": 0.49 },
+            { "x": 2001, "y": 0.49 },
+            { "x": 2001.5, "y": 0.29 },
+            { "x": 2002, "y": 0.32 },
+            { "x": 2003, "y": 0.59 },
+            { "x": 2004, "y": 0.62 }
+          ]
+        }
+      ],
+
+      "scales": [
+        {
+          "name": "x",
+          "type": "linear",
+          "range": "width",
+          "zero": false,
+          "domain": [2000, 2010]
+        },
+        {
+          "name": "y",
+          "type": "linear",
+          "range": "height",
+          "domain": [0, 1]
+        }
+      ],
+
+      "axes": [
+        { "orient": "bottom", "scale": "x", "format": ".0f" },
+        { "orient": "left", "scale": "y", "format": "%" }
+      ],
+
+      "marks": [
+        {
+          "type": "group",
+          "from": {
+            "facet": {
+              "name": "series",
+              "data": "table",
+              "groupby": "c"
+            }
+          },
+          "marks": [
+            {
+              "type": "line",
+              "from": { "data": "series" },
+              "encode": {
+                "enter": {
+                  "x": { "scale": "x", "field": "x" },
+                  "y": { "scale": "y", "field": "y" },
+                  "stroke": { "value": "#276EB8" },
+                  "strokeWidth": { "value": 4 }
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+
+    const size = 500000;
+    const data = generateData(size, [
+      sampleCounter('key'),
+      sampleNominal('category', 'abcdefghij'),
+      sampleNormal('u', 0, 2),
+      sampleNormal('v', 10, 5),
+      sampleNormal('x', 10, 5),
+      sampleNormal('y', 10, 5),
+      sampleNormal('c', 10, 5),
+      sampleUniform('f', -1, 1),
+      sampleInteger('x', 1, 100)
+    ]);
+    function generateData(n, samplers) {
+      const data = Array(n);
+      for (let i = 0; i < n; ++i) {
+        data[i] = sampleDatum(samplers);
+      }
+      return data;
+    }
+    function sampleDatum(samplers) {
+      const d = {}, n = samplers.length;
+      for (let i = 0; i < n; ++i) {
+        d[samplers[i].name] = samplers[i].sample();
+      }
+      return d;
+    }
+    function sampleCounter(name) {
+      let count = 0;
+      return {
+        name: name,
+        sample: () => ++count
+      };
+    }
+    function sampleNormal(name, mean, stdev) {
+      return {
+        name: name,
+        sample: vega.randomNormal(mean, stdev).sample
+      };
+    }
+    function sampleUniform(name, min, max) {
+      return {
+        name: name,
+        sample: vega.randomUniform(min, max).sample
+      };
+    }
+    function sampleInteger(name, min, max) {
+      return {
+        name: name,
+        sample: vega.randomInteger(min, max).sample
+      };
+    }
+    function sampleNominal(name, values) {
+      const sample = vega.randomInteger(0, values.length).sample;
+      return {
+        name: name,
+        sample: () => values[sample()]
+      };
+    }
+    function toCSV(data) {
+      const headers = Object.keys(data[0]);
+      let csv = headers.join(',') + '\n';
+      for (let i = 0, n = data.length; i < n; ++i) {
+        csv += headers.map(h => data[i][h]).join(',') + '\n';
+      }
+      return csv;
+    }
+
+    function specScatter(values) {
+      return {
+        width: 500,
+        height: 500,
+        autosize: 'pad',
+        padding: 5,
+        data: [
+          {
+            name: 'table',
+            values: values
+          }
+        ],
+        scales: [
+          {
+            name: 'x',
+            domain: { data: 'table', field: 'u' },
+            padding: 5,
+            range: 'width'
+          },
+          {
+            name: 'y',
+            domain: { data: 'table', field: 'v' },
+            padding: 5,
+            range: 'height'
+          }
+        ],
+        axes: [
+          { orient: 'left', scale: 'y' },
+          { orient: 'bottom', scale: 'x' },
+        ],
+        marks: [
+          {
+            type: 'symbol',
+            from: { data: 'table' },
+            encode: {
+              enter: {
+                x: { scale: 'x', field: 'u' },
+                y: { scale: 'y', field: 'v' },
+                size: { value: 64 },
+                fill: { value: 'steelblue' },
+                fillOpacity: { value: 0.25 }
+              }
+            }
+          }
+        ]
+      };
+    }
+
+    function bar(data) {
+      return {
+        "$schema": "https://vega.github.io/schema/vega/v5.json",
+        "description": "A basic stacked bar chart example.",
+        "width": 500,
+        "height": 200,
+        "padding": 5,
+
+        "data": [
+          {
+            "name": "table",
+            "values": data,
+            "transform": [
+              {
+                "type": "stack",
+                "groupby": ["x"],
+                "sort": { "field": "c" },
+                "field": "y"
+              }
+            ]
+          }
+        ],
+
+        "scales": [
+          {
+            "name": "x",
+            "type": "band",
+            "range": "width",
+            "domain": { "data": "table", "field": "x" }
+          },
+          {
+            "name": "y",
+            "type": "linear",
+            "range": "height",
+            "nice": true, "zero": true,
+            "domain": { "data": "table", "field": "y1" }
+          },
+          {
+            "name": "color",
+            "type": "ordinal",
+            "range": "category",
+            "domain": { "data": "table", "field": "c" }
+          }
+        ],
+
+        "axes": [
+          { "orient": "bottom", "scale": "x", "zindex": 1 },
+          { "orient": "left", "scale": "y", "zindex": 1 }
+        ],
+
+        "marks": [
+          {
+            "type": "rect",
+            "from": { "data": "table" },
+            "encode": {
+              "enter": {
+                "x": { "scale": "x", "field": "x" },
+                "width": { "scale": "x", "band": 1, "offset": -1 },
+                "y": { "scale": "y", "field": "y0" },
+                "y2": { "scale": "y", "field": "y1" },
+                "fill": { "scale": "color", "field": "c" }
+              },
+              "update": {
+                "fillOpacity": { "value": 1 }
+              },
+              "hover": {
+                "fillOpacity": { "value": 0.5 }
+              }
+            }
+          }
+        ]
+      };
+    }
+
+
+    // const dataSchema = {
+    //   '$schema': 'https://vega.github.io/schema/vega-lite/v2.json',
+    //   'data': { 'name': 'table' },
+    //   'width': width,
+    //   'height': width / 1.6,
+    //   'autosize': 'fit',
+    //   'mark': {
+    //     'type': 'line',
+    //     'interpolate': 'monotone'
+    //   },
+    //   'encoding': {
+    //     'x': { 'field': 'x', 'type': 'quantitative', 'scale': { 'zero': false } },
+    //     'y': { 'field': 'y', 'type': 'quantitative' }
+    //   }
+    // }
+
+    var flame = {
+      "autosize": "pad",
+      "height": 300,
+      "width": 300,
+      "background": "#2e3440",
+      "scales": [
+        {
+          "name": "color",
+          "type": "ordinal",
+          "domain": {
+            "field": "depth",
+            "data": "tree",
+            "sort": { "order": "ascending" }
+          },
+          "range": { "scheme": "tableau20" }
+        }
+      ],
+      "signals": [
+        {
+          "name": "clicked",
+          "value": null,
+          "on": [
+            {
+              "events": "click",
+              "update": "datum ? {value: datum.id, depth: datum.depth} : null",
+              "force": true
+            }
+          ]
+        },
+        {
+          "name": "clear",
+          "value": true,
+          "on": [
+            { "events": "mouseup[!event.item]", "update": "true", "force": true }
+          ]
+        },
+        {
+          "name": "shift",
+          "value": false,
+          "on": [{ "events": "click", "update": "event.shiftKey", "force": true }]
+        }
+      ],
+      "padding": 30,
+      "marks": [
+        {
+          "type": "rect",
+          "from": { "data": "filter-tree" },
+          "encode": {
+            "update": {
+              "y": { "field": "r0" },
+              "stroke": { "value": "white" },
+              "fill": { "scale": "color", "field": "depth" },
+              "strokeWidth": { "value": 0.1 },
+              "x": { "field": "a0" },
+              "y2": { "field": "r1" },
+              "x2": { "field": "a1" },
+              "tooltip": {
+                "signal": "{n: datum.name,\n t:datum.thrown\n,        a:datum.args,\n         r: datum.return}"
+              }
+            },
+            "hover": {
+              "stroke": { "value": "red" },
+              "strokeWidth": { "value": 2 },
+              "zindex": { "value": 1 }
+            }
+          }
+        }
+      ],
+      "$schema": "https://vega.github.io/schema/vega/v5.json",
+      "data": [
+        {
+          "name": "selected",
+          "on": [
+            { "trigger": "clear", "remove": true },
+            { "trigger": "!shift", "remove": true },
+            { "trigger": "!shift && clicked", "insert": "clicked" },
+            { "trigger": "shift && clicked", "toggle": "clicked" }
+          ]
+        },
+        {
+          "name": "selected-depth-range",
+          "source": "selected",
+          "transform": [
+            { "type": "aggregate", "fields": ["depth"], "ops": ["max"], "as": ["m"] }
+          ]
+        },
+        {
+          "name": "tree",
+          "transform": [{ "key": "id", "parentKey": "parent", "type": "stratify" }],
+          "values": [
+            { "parent": null, "name": "root", "id": "root" },
+            {
+              "args": [["quarter", "quarter", "nickel"]],
+              "parent": "G__150",
+              "return": 0.55,
+              "name": "omni-trace.testing-ns/calc-coin-value",
+              "start": 1637431413788,
+              "id": "G__151",
+              "end": 1637431413788
+            },
+            {
+              "args": [
+                {
+                  "coins-inserted": [],
+                  "coins-returned": [],
+                  "dispensed": null,
+                  "inventory": { "a1": { "name": "taco", "qty": 10, "price": 0.85 } },
+                  "err-msg": null
+                },
+                "quarter"
+              ],
+              "parent": "root",
+              "return": {
+                "coins-inserted": ["quarter"],
+                "coins-returned": [],
+                "dispensed": null,
+                "inventory": { "a1": { "name": "taco", "qty": 10, "price": 0.85 } },
+                "err-msg": null
+              },
+              "name": "omni-trace.testing-ns/insert-coin",
+              "start": 1637431413788,
+              "id": "G__127",
+              "end": 1637431413788
+            },
+            {
+              "args": [
+                {
+                  "coins-inserted": ["quarter", "dime", "nickel", "penny"],
+                  "coins-returned": [],
+                  "dispensed": null,
+                  "inventory": { "a1": { "name": "taco", "qty": 10, "price": 0.85 } },
+                  "err-msg": null
+                },
+                "a1"
+              ],
+              "parent": "G__132",
+              "return": { "name": "taco", "qty": 10, "price": 0.85 },
+              "name": "omni-trace.testing-ns/get-selection",
+              "start": 1637431413788,
+              "id": "G__133",
+              "end": 1637431413788,
+              "a0": 518.875,
+              "r0": 437.6000000000001,
+              "a1": 620.25,
+              "r1": 581.4666666666667,
+              "depth": 3,
+              "children": 0
+            },
+            {
+              "args": [
+                {
+                  "coins-inserted": ["quarter", "dime", "nickel", "penny"],
+                  "coins-returned": [],
+                  "dispensed": null,
+                  "inventory": { "a1": { "name": "taco", "qty": 10, "price": 0.85 } },
+                  "err-msg": null
+                },
+                { "name": "taco", "qty": 10, "price": 0.85 }
+              ],
+              "parent": "G__135",
+              "return": ["quarter", "quarter", "nickel"],
+              "name": "omni-trace.testing-ns/calc-change-to-return",
+              "start": 1637431413788,
+              "id": "G__137",
+              "end": 1637431413788,
+              "a0": 829,
+              "r0": 437.6000000000001,
+              "a1": 1654,
+              "r1": 581.4666666666667,
+              "depth": 3,
+              "children": 3
+            },
+            {
+              "args": [
+                {
+                  "coins-inserted": ["quarter", "dime", "nickel"],
+                  "coins-returned": [],
+                  "dispensed": null,
+                  "inventory": { "a1": { "name": "taco", "qty": 10, "price": 0.85 } },
+                  "err-msg": null
+                },
+                "penny"
+              ],
+              "parent": "root",
+              "return": {
+                "coins-inserted": ["quarter", "dime", "nickel", "penny"],
+                "coins-returned": [],
+                "dispensed": null,
+                "inventory": { "a1": { "name": "taco", "qty": 10, "price": 0.85 } },
+                "err-msg": null
+              },
+              "name": "omni-trace.testing-ns/insert-coin",
+              "start": 1637431413788,
+              "id": "G__130",
+              "end": 1637431413788,
+              "a0": 105.375,
+              "r0": 145.86666666666667,
+              "a1": 206.75,
+              "r1": 289.73333333333335,
+              "depth": 1,
+              "children": 0
+            },
+            {
+              "args": [["quarter"]],
+              "parent": "G__142",
+              "return": 0.25,
+              "name": "omni-trace.testing-ns/calc-coin-value",
+              "start": 1637431413788,
+              "id": "G__143",
+              "end": 1637431413788,
+              "a0": 1139.125,
+              "r0": 875.2000000000002,
+              "a1": 1240.5,
+              "r1": 1019.066666666667,
+              "depth": 6,
+              "children": 0
+            },
+            {
+              "args": [0.55, ["quarter", "quarter", "nickel"]],
+              "parent": "G__144",
+              "return": ["quarter", "quarter", "nickel"],
+              "name": "omni-trace.testing-ns/calc-change-to-return*",
+              "start": 1637431413788,
+              "id": "G__150",
+              "end": 1637431413788,
+              "a0": 1242.5,
+              "r0": 1021.066666666667,
+              "a1": 1343.875,
+              "r1": 1164.9333333333334,
+              "depth": 7,
+              "children": 1
+            },
+            {
+              "args": [
+                {
+                  "coins-inserted": ["quarter"],
+                  "coins-returned": [],
+                  "dispensed": null,
+                  "inventory": { "a1": { "name": "taco", "qty": 10, "price": 0.85 } },
+                  "err-msg": null
+                },
+                "dime"
+              ],
+              "parent": "root",
+              "return": {
+                "coins-inserted": ["quarter", "dime"],
+                "coins-returned": [],
+                "dispensed": null,
+                "inventory": { "a1": { "name": "taco", "qty": 10, "price": 0.85 } },
+                "err-msg": null
+              },
+              "name": "omni-trace.testing-ns/insert-coin",
+              "start": 1637431413788,
+              "id": "G__128",
+              "end": 1637431413788,
+              "a0": 208.75,
+              "r0": 145.86666666666667,
+              "a1": 310.125,
+              "r1": 289.73333333333335,
+              "depth": 1,
+              "children": 0
+            },
+            {
+              "args": [
+                {
+                  "coins-inserted": [],
+                  "coins-returned": ["quarter", "quarter", "nickel"],
+                  "dispensed": { "name": "taco", "qty": 10, "price": 0.85 },
+                  "inventory": { "a1": { "name": "taco", "qty": 9, "price": 0.85 } },
+                  "err-msg": null
+                }
+              ],
+              "parent": "root",
+              "name": "omni-trace.testing-ns/retrieve-change-returned",
+              "start": 1637431413788,
+              "id": "G__152",
+              "thrown": {
+                "object": {
+                  "meta": {
+                    "meta": null,
+                    "ba": 1,
+                    "root": {
+                      "Ha": {},
+                      "bitmap": 1073741824,
+                      "P": [
+                        {
+                          "Mb": "portal.runtime",
+                          "name": "id",
+                          "sa": "portal.runtime/id",
+                          "_hash": 1768418782,
+                          "T": 2153775105,
+                          "da": 4096
+                        },
+                        143,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null
+                      ],
+                      "da": 131072,
+                      "T": 0
+                    },
+                    "Bb": false,
+                    "Db": null,
+                    "Y": null,
+                    "T": 16123663,
+                    "da": 139268
+                  },
+                  "ba": 5,
+                  "root": {
+                    "Ha": {},
+                    "bitmap": 34607120,
+                    "P": [
+                      {
+                        "Mb": null,
+                        "name": "meta",
+                        "sa": "meta",
+                        "_hash": 1499536964,
+                        "T": 2153775105,
+                        "da": 4096
+                      },
+                      null,
+                      null,
+                      {
+                        "Ha": {},
+                        "bitmap": 4098,
+                        "P": [
+                          {
+                            "Mb": null,
+                            "name": "rep",
+                            "sa": "rep",
+                            "_hash": -1226820564,
+                            "T": 2153775105,
+                            "da": 4096
+                          },
+                          null,
+                          {
+                            "Mb": null,
+                            "name": "type",
+                            "sa": "type",
+                            "_hash": 1174270348,
+                            "T": 2153775105,
+                            "da": 4096
+                          },
+                          "#object[Error]",
+                          null,
+                          null,
+                          null,
+                          null
+                        ],
+                        "da": 131072,
+                        "T": 0
+                      },
+                      {
+                        "Mb": null,
+                        "name": "id",
+                        "sa": "id",
+                        "_hash": -1388402092,
+                        "T": 2153775105,
+                        "da": 4096
+                      },
+                      142,
+                      {
+                        "Mb": null,
+                        "name": "tag",
+                        "sa": "tag",
+                        "_hash": -1290361223,
+                        "T": 2153775105,
+                        "da": 4096
+                      },
+                      {
+                        "Mb": null,
+                        "name": "object",
+                        "sa": "object",
+                        "_hash": null,
+                        "T": 2153775105,
+                        "da": 4096
+                      }
+                    ],
+                    "da": 131072,
+                    "T": 0
+                  },
+                  "Bb": false,
+                  "Db": null,
+                  "Y": null,
+                  "T": 16123663,
+                  "da": 139268
+                },
+                "T": 393216,
+                "da": 0,
+                "closure_uid_767065991": 29
+              },
+              "end": 1637431413789,
+              "a0": 312.125,
+              "r0": 145.86666666666667,
+              "a1": 413.5,
+              "r1": 289.73333333333335,
+              "depth": 1,
+              "children": 0
+            },
+            {
+              "args": [
+                {
+                  "coins-inserted": ["quarter", "dime", "nickel", "penny"],
+                  "coins-returned": [],
+                  "dispensed": null,
+                  "inventory": { "a1": { "name": "taco", "qty": 10, "price": 0.85 } },
+                  "err-msg": null
+                },
+                "a1"
+              ],
+              "parent": "G__135",
+              "return": { "name": "taco", "qty": 10, "price": 0.85 },
+              "name": "omni-trace.testing-ns/get-selection",
+              "start": 1637431413788,
+              "id": "G__136",
+              "end": 1637431413788,
+              "a0": 725.625,
+              "r0": 437.6000000000001,
+              "a1": 827,
+              "r1": 581.4666666666667,
+              "depth": 3,
+              "children": 0
+            },
+            {
+              "args": [
+                {
+                  "coins-inserted": ["quarter", "dime"],
+                  "coins-returned": [],
+                  "dispensed": null,
+                  "inventory": { "a1": { "name": "taco", "qty": 10, "price": 0.85 } },
+                  "err-msg": null
+                },
+                "nickel"
+              ],
+              "parent": "root",
+              "return": {
+                "coins-inserted": ["quarter", "dime", "nickel"],
+                "coins-returned": [],
+                "dispensed": null,
+                "inventory": { "a1": { "name": "taco", "qty": 10, "price": 0.85 } },
+                "err-msg": null
+              },
+              "name": "omni-trace.testing-ns/insert-coin",
+              "start": 1637431413788,
+              "id": "G__129",
+              "end": 1637431413788,
+              "a0": 415.5,
+              "r0": 145.86666666666667,
+              "a1": 516.875,
+              "r1": 289.73333333333335,
+              "depth": 1,
+              "children": 0
+            },
+            {
+              "args": [0.55, ["quarter", "quarter", "quarter"]],
+              "parent": "G__144",
+              "return": null,
+              "name": "omni-trace.testing-ns/calc-change-to-return*",
+              "start": 1637431413788,
+              "id": "G__146",
+              "end": 1637431413788,
+              "a0": 1345.875,
+              "r0": 1021.066666666667,
+              "a1": 1447.25,
+              "r1": 1164.9333333333334,
+              "depth": 7,
+              "children": 1
+            },
+            {
+              "args": [
+                {
+                  "coins-inserted": ["quarter", "dime", "nickel", "penny"],
+                  "coins-returned": [],
+                  "dispensed": null,
+                  "inventory": { "a1": { "name": "taco", "qty": 10, "price": 0.85 } },
+                  "err-msg": null
+                },
+                "a1"
+              ],
+              "parent": "root",
+              "return": {
+                "coins-inserted": [],
+                "coins-returned": ["quarter", "quarter", "nickel"],
+                "dispensed": { "name": "taco", "qty": 10, "price": 0.85 },
+                "inventory": { "a1": { "name": "taco", "qty": 9, "price": 0.85 } },
+                "err-msg": null
+              },
+              "name": "omni-trace.testing-ns/press-button",
+              "start": 1637431413788,
+              "id": "G__131",
+              "end": 1637431413788,
+              "a0": 518.875,
+              "r0": 145.86666666666667,
+              "a1": 1654,
+              "r1": 289.73333333333335,
+              "depth": 1,
+              "children": 2
+            },
+            {
+              "args": [
+                {
+                  "coins-inserted": ["quarter", "dime", "nickel", "penny"],
+                  "coins-returned": [],
+                  "dispensed": null,
+                  "inventory": { "a1": { "name": "taco", "qty": 10, "price": 0.85 } },
+                  "err-msg": null
+                },
+                "a1"
+              ],
+              "parent": "G__131",
+              "return": {
+                "coins-inserted": [],
+                "coins-returned": ["quarter", "quarter", "nickel"],
+                "dispensed": { "name": "taco", "qty": 10, "price": 0.85 },
+                "inventory": { "a1": { "name": "taco", "qty": 9, "price": 0.85 } },
+                "err-msg": null
+              },
+              "name": "omni-trace.testing-ns/process-transaction",
+              "start": 1637431413788,
+              "id": "G__135",
+              "end": 1637431413788,
+              "a0": 725.625,
+              "r0": 291.73333333333335,
+              "a1": 1654,
+              "r1": 435.6000000000001,
+              "depth": 2,
+              "children": 2
+            },
+            {
+              "args": [0.5499999999999999],
+              "parent": "G__137",
+              "return": 0.55,
+              "name": "omni-trace.testing-ns/round-to-pennies",
+              "start": 1637431413788,
+              "id": "G__139",
+              "end": 1637431413788,
+              "a0": 829,
+              "r0": 583.4666666666667,
+              "a1": 930.375,
+              "r1": 727.3333333333335,
+              "depth": 4,
+              "children": 0
+            },
+            {
+              "args": [
+                {
+                  "coins-inserted": ["quarter", "dime", "nickel", "penny"],
+                  "coins-returned": [],
+                  "dispensed": null,
+                  "inventory": { "a1": { "name": "taco", "qty": 10, "price": 0.85 } },
+                  "err-msg": null
+                },
+                "a1"
+              ],
+              "parent": "G__131",
+              "return": true,
+              "name": "omni-trace.testing-ns/valid-selection",
+              "start": 1637431413788,
+              "id": "G__132",
+              "end": 1637431413788,
+              "a0": 518.875,
+              "r0": 291.73333333333335,
+              "a1": 723.625,
+              "r1": 435.6000000000001,
+              "depth": 2,
+              "children": 2
+            },
+            {
+              "args": [["quarter", "quarter"]],
+              "parent": "G__144",
+              "return": 0.5,
+              "name": "omni-trace.testing-ns/calc-coin-value",
+              "start": 1637431413788,
+              "id": "G__145",
+              "end": 1637431413788,
+              "a0": 1449.25,
+              "r0": 1021.066666666667,
+              "a1": 1550.625,
+              "r1": 1164.9333333333334,
+              "depth": 7,
+              "children": 0
+            },
+            {
+              "args": [["quarter", "quarter", "dime"]],
+              "parent": "G__148",
+              "return": 0.6,
+              "name": "omni-trace.testing-ns/calc-coin-value",
+              "start": 1637431413788,
+              "id": "G__149",
+              "end": 1637431413788,
+              "a0": 1552.625,
+              "r0": 1166.9333333333334,
+              "a1": 1654,
+              "r1": 1310.8000000000002,
+              "depth": 8,
+              "children": 0
+            },
+            {
+              "args": [0.55, ["quarter"]],
+              "parent": "G__140",
+              "return": ["quarter", "quarter", "nickel"],
+              "name": "omni-trace.testing-ns/calc-change-to-return*",
+              "start": 1637431413788,
+              "id": "G__142",
+              "end": 1637431413788,
+              "a0": 1139.125,
+              "r0": 729.3333333333335,
+              "a1": 1654,
+              "r1": 873.2000000000002,
+              "depth": 5,
+              "children": 2
+            },
+            {
+              "args": [["quarter", "quarter", "quarter"]],
+              "parent": "G__146",
+              "return": 0.75,
+              "name": "omni-trace.testing-ns/calc-coin-value",
+              "start": 1637431413788,
+              "id": "G__147",
+              "end": 1637431413788,
+              "a0": 1345.875,
+              "r0": 1166.9333333333334,
+              "a1": 1447.25,
+              "r1": 1310.8000000000002,
+              "depth": 8,
+              "children": 0
+            },
+            {
+              "args": [0.55, ["quarter", "quarter", "dime"]],
+              "parent": "G__144",
+              "return": null,
+              "name": "omni-trace.testing-ns/calc-change-to-return*",
+              "start": 1637431413788,
+              "id": "G__148",
+              "end": 1637431413788,
+              "a0": 1552.625,
+              "r0": 1021.066666666667,
+              "a1": 1654,
+              "r1": 1164.9333333333334,
+              "depth": 7,
+              "children": 1
+            },
+            {
+              "args": [0.55, ["quarter", "quarter"]],
+              "parent": "G__142",
+              "return": ["quarter", "quarter", "nickel"],
+              "name": "omni-trace.testing-ns/calc-change-to-return*",
+              "start": 1637431413788,
+              "id": "G__144",
+              "end": 1637431413788,
+              "a0": 1242.5,
+              "r0": 875.2000000000002,
+              "a1": 1654,
+              "r1": 1019.066666666667,
+              "depth": 6,
+              "children": 4
+            },
+            {
+              "args": [[]],
+              "parent": "G__140",
+              "return": 0,
+              "name": "omni-trace.testing-ns/calc-coin-value",
+              "start": 1637431413788,
+              "id": "G__141",
+              "end": 1637431413788,
+              "a0": 1035.75,
+              "r0": 729.3333333333335,
+              "a1": 1137.125,
+              "r1": 873.2000000000002,
+              "depth": 5,
+              "children": 0
+            },
+            {
+              "args": [0.55, []],
+              "parent": "G__137",
+              "return": ["quarter", "quarter", "nickel"],
+              "name": "omni-trace.testing-ns/calc-change-to-return*",
+              "start": 1637431413788,
+              "id": "G__140",
+              "end": 1637431413788,
+              "a0": 1035.75,
+              "r0": 583.4666666666667,
+              "a1": 1654,
+              "r1": 727.3333333333335,
+              "depth": 4,
+              "children": 2
+            },
+            {
+              "args": [["quarter", "dime", "nickel", "penny"]],
+              "parent": "G__132",
+              "return": 1.4,
+              "name": "omni-trace.testing-ns/calc-coin-value",
+              "start": 1637431413788,
+              "id": "G__134",
+              "end": 1637431413788,
+              "a0": 622.25,
+              "r0": 437.6000000000001,
+              "a1": 723.625,
+              "r1": 581.4666666666667,
+              "depth": 3,
+              "children": 0
+            },
+            {
+              "args": [["quarter", "dime", "nickel", "penny"]],
+              "parent": "G__137",
+              "return": 1.4,
+              "name": "omni-trace.testing-ns/calc-coin-value",
+              "start": 1637431413788,
+              "id": "G__138",
+              "end": 1637431413788,
+              "a0": 932.375,
+              "r0": 583.4666666666667,
+              "a1": 1033.75,
+              "r1": 727.3333333333335,
+              "depth": 4,
+              "children": 0
+            }
+          ]
+        },
+        {
+          "name": "tree-path",
+          "source": "tree",
+          "transform": [
+            {
+              "type": "formula",
+              "expr": "treePath('tree', datum.id, 'root')",
+              "as": "treepath"
+            }
+          ]
+        },
+        {
+          "name": "tree-ancestors",
+          "source": "tree",
+          "transform": [
+            {
+              "type": "formula",
+              "expr": "treeAncestors('tree', datum.id, 'root')",
+              "as": "treeAncestors"
+            }
+          ]
+        },
+        {
+          "name": "tree-ancestors-flatt",
+          "source": "tree-ancestors",
+          "transform": [{ "type": "flatten", "fields": ["treeAncestors"] }]
+        },
+        {
+          "name": "selected-ancestors",
+          "source": "tree-ancestors",
+          "transform": [
+            { "type": "filter", "expr": "indata('selected', 'value', datum.id)" }
+          ]
+        },
+        {
+          "name": "selected-ancestors-fold",
+          "source": "selected-ancestors",
+          "transform": [{ "type": "flatten", "fields": ["treeAncestors"] }]
+        },
+        {
+          "name": "filtered",
+          "source": "tree-ancestors-flatt",
+          "transform": [
+            {
+              "type": "filter",
+              "expr": "!length(data('selected')) || datum.parent == null || indata('selected', 'value', datum.treeAncestors.id)"
+            }
+          ]
+        },
+        {
+          "name": "filtered-aggregate",
+          "source": "filtered",
+          "transform": [{ "type": "aggregate", "groupby": ["id"] }]
+        },
+        {
+          "name": "children-of-selected",
+          "source": "selected",
+          "transform": [
+            {
+              "type": "lookup",
+              "from": "tree-ancestors-flatt",
+              "key": "id",
+              "fields": ["value"],
+              "as": ["child"]
+            }
+          ]
+        },
+        {
+          "name": "filter-tree",
+          "source": "tree",
+          "transform": [
+            {
+              "type": "filter",
+              "expr": "!length(data('selected'))|| indata('filtered-aggregate', 'id', datum.id) || indata('selected-ancestors-fold', 'treeAncestors.id', datum.id)"
+            },
+            { "key": "id", "parentKey": "parent", "type": "stratify" },
+            {
+              "as": ["a0", "r0", "a1", "r1", "depth", "children"],
+              "type": "partition",
+              "size": [{ "signal": "width" }, { "signal": "height" }],
+              "padding": 2,
+              "sort": { "field": "id" }
+            }
+          ]
+        }
+      ]
+    }
+
+    var spec = {
+      "$schema": "https://vega.github.io/schema/vega/v5.json",
+      "description": "An example of treemap layout for hierarchical data.",
+      "width": 960,
+      "height": 500,
+      "padding": 2.5,
+      "autosize": "none",
+
+      "signals": [
+        {
+          "name": "layout", "value": "squarify",
+          "bind": {
+            "input": "select",
+            "options": [
+              "squarify",
+              "binary",
+              "slicedice"
+            ]
+          }
+        },
+        {
+          "name": "aspectRatio", "value": 1.6,
+          "bind": { "input": "range", "min": 1, "max": 5, "step": 0.1 }
+        }
+      ],
+
+      "data": [
+        {
+          "name": "tree",
+          "url": "https://vega.github.io/editor/data/flare.json",
+          "transform": [
+            {
+              "type": "stratify",
+              "key": "id",
+              "parentKey": "parent"
+            },
+            {
+              "type": "treemap",
+              "field": "size",
+              "sort": { "field": "value" },
+              "round": true,
+              "method": { "signal": "layout" },
+              "ratio": { "signal": "aspectRatio" },
+              "size": [{ "signal": "width" }, { "signal": "height" }]
+            }
+          ]
+        },
+        {
+          "name": "nodes",
+          "source": "tree",
+          "transform": [{ "type": "filter", "expr": "datum.children" }]
+        },
+        {
+          "name": "leaves",
+          "source": "tree",
+          "transform": [{ "type": "filter", "expr": "!datum.children" }]
+        }
+      ],
+
+      "scales": [
+        {
+          "name": "color",
+          "type": "ordinal",
+          "domain": { "data": "nodes", "field": "name" },
+          "range": [
+            "#3182bd", "#6baed6", "#9ecae1", "#c6dbef", "#e6550d",
+            "#fd8d3c", "#fdae6b", "#fdd0a2", "#31a354", "#74c476",
+            "#a1d99b", "#c7e9c0", "#756bb1", "#9e9ac8", "#bcbddc",
+            "#dadaeb", "#636363", "#969696", "#bdbdbd", "#d9d9d9"
+          ]
+        },
+        {
+          "name": "size",
+          "type": "ordinal",
+          "domain": [0, 1, 2, 3],
+          "range": [256, 28, 20, 14]
+        },
+        {
+          "name": "opacity",
+          "type": "ordinal",
+          "domain": [0, 1, 2, 3],
+          "range": [0.15, 0.5, 0.8, 1.0]
+        }
+      ],
+
+      "marks": [
+        {
+          "type": "rect",
+          "from": { "data": "nodes" },
+          "interactive": false,
+          "encode": {
+            "enter": {
+              "fill": { "scale": "color", "field": "name" },
+              "opacity": { "value": 0.2 }
+            },
+            "update": {
+              "x": { "field": "x0" },
+              "y": { "field": "y0" },
+              "x2": { "field": "x1" },
+              "y2": { "field": "y1" },
+              "z": { "value": 5.5 },
+              "z2": { "value": 5.5 }
+            }
+          }
+        },
+        {
+          "type": "rect",
+          "from": { "data": "leaves" },
+          "encode": {
+            "enter": {
+              "stroke": { "value": "#fff" },
+              "opacity": { "value": 0.2 }
+            },
+            "update": {
+              "x": { "field": "x0" },
+              "y": { "field": "y0" },
+              "x2": { "field": "x1" },
+              "y2": { "field": "y1" },
+              "z": { "value": 5.5 },
+              "z2": { "value": 5.5 },
+              "fill": { "value": "transparent" }
+            },
+            "hover": {
+              "fill": { "value": "red" }
+            }
+          }
+        },
+        {
+          "type": "text",
+          "from": { "data": "nodes" },
+          "interactive": false,
+          "encode": {
+            "enter": {
+              "font": { "value": "Helvetica Neue, Arial" },
+              "align": { "value": "center" },
+              "baseline": { "value": "middle" },
+              "fill": { "value": "#000" },
+              "text": { "field": "name" },
+              "fontSize": { "scale": "size", "field": "depth" },
+              "fillOpacity": { "scale": "opacity", "field": "depth" }
+            },
+            "update": {
+              "x": { "signal": "0.5 * (datum.x0 + datum.x1)" },
+              "y": { "signal": "0.5 * (datum.y0 + datum.y1)" }
+            }
+          }
+        }
+      ]
+    }
+
+
+
+
+
+
+  </script>
+
+  <script type="text/javascript">
+    var view;
+
+    // vega.loader()
+    //   .load('https://vega.github.io/vega/examples/bar-chart.vg.json')
+    //   .then(function(data) { render(chartSpec1); });
+
+    // function render(spec) {
+    //   view = new vega.View(vega.parse(spec))
+    //     .renderer('svg')  // set renderer (canvas or svg)
+    //     .initialize('#view') // initialize view within parent DOM container
+    //     //.hover()             // enable hover encode set processing
+    //     .run();
+    // }
+
+    var view = new VegaDeckGl.ViewGl(vega.parse(bar(data)))
+      .renderer('deck.gl')
+      .initialize(document.querySelector('#vis'))
+      .run();
+    // var view = new vega.View(vega.parse(bar(data)))
+    //   .renderer('canvas')
+    //   .initialize(document.querySelector('#vis'))
+    //   .run();
+  </script>
+</body>

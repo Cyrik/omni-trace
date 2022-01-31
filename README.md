@@ -1,9 +1,10 @@
 # omni-trace
-Omnipotent/omniscient tracing core for debugging clojure(script)
 
-beta, api is still unstable but its only for dev time so there shouldn't be any problems.
+Omnipotent/omniscient tracing core for debugging Clojure(script)
 
-[![Clojars Project](https://img.shields.io/clojars/v/org.clojars.cyrik/omni-trace.svg)](https://clojars.org/org.clojars.cyrik/omni-trace)
+API is still a little unstable but it's only for dev time so there shouldn't be any problems.
+
+[![Clojars Project](https://img.shields.io/clojars/v/org.clojars.cyrik/omni-trace.svg)](https://clojars.org/org.clojars.cyrik/omni-trace)[Slack channel](https://clojurians.slack.com/archives/C02P64MNXLZ)
 
 or just through github source:
 
@@ -13,6 +14,8 @@ or just through github source:
                                :sha     "5def7f9ad31d703317e5be5e64a57322e1c89eed"}}
                           
 ```
+
+[slack channel](https://clojurians.slack.com/archives/C02P64MNXLZ)
 
 ## Usage
 
@@ -72,15 +75,15 @@ or just through github source:
 
 This uses [clj-kondo](https://github.com/clj-kondo/clj-kondo) to find all transitive calls from the provided symbol.
 It then runs the function with any supplied args and untraces everything.
-This reaches all the way down into clojure.core if you remove the blacklist.
+It reaches down into clojure.core if you remove the blacklist.
 
 ![Screenshot](docs/deep-trace.png)
 
-If your deeptraced function only traced itself make sure it's namespace is required somewhere inside "src" or "dev".
+If your deeptraced function only traced itself make sure its namespace is required somewhere inside "src" or "dev".
 I will add more options for choosing namespaces later.
 Currently there are still a few problems with recursion, will have to rewrite the deps graph for it. 
 I'm guessing a lot of code will still explode when allowing clojure.core trace, since the tracing code itself, uses those.
-Will probably cleanup the blacklist and try to use local function copies for tracing.
+Will probably clean up the blacklist and try to use local function copies for tracing.
 
 ## experimental inner-trace
 

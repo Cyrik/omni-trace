@@ -92,7 +92,9 @@
      (apply #'deep/run-traced (into [s] args))))
 (macros/deftime
   #?(:clj
-     (defmacro run [form]
+     (defmacro run 
+       "Runs the form in traced mode. Does not work if the form starts with a macro."
+       [form]       
        (macros/case :clj `(deep/run-traced (~util/->sym ~(first form)) ~@(rest form))
                     :cljs `(do
                              ~(let [fun (ana-api/resolve &env (first form))
@@ -102,17 +104,17 @@
                                           :name
                                           name
                                           symbol)
-                                    dep-list (deep/transitive-deps (deep/deps (deep/analysis ["dev" "src"]) :cljs)
+                                    dep-list (deep/transitive-deps (deep/dependencies
+                                                                    (deep/analysis ["dev" "src"]) :cljs)
                                                                    n f)
                                     sym-list  (mapv #(symbol (name (first %)) (name (second %))) (filter first dep-list)) ;;fix nil namespaces
                                     instrumenters (mapv (fn [sym] `#(cyrik.omni-trace.instrument.cljs/cljs-instrument-fn '~sym {:cyrik.omni-trace/workspace cyrik.omni-trace.instrument/workspace} cyrik.omni-trace.instrument/instrumented)) sym-list)
-                                    deinstrumenters (mapv (fn [sym] `#(cyrik.omni-trace.instrument.cljs/cljs-instrument-fn '~sym {:cyrik.omni-trace/workspace cyrik.omni-trace.instrument/workspace} cyrik.omni-trace.instrument/uninstrumented)) sym-list)
-                                    ]
+                                    deinstrumenters (mapv (fn [sym] `#(cyrik.omni-trace.instrument.cljs/cljs-instrument-fn '~sym {:cyrik.omni-trace/workspace cyrik.omni-trace.instrument/workspace} cyrik.omni-trace.instrument/uninstrumented)) sym-list)]
                                 `(let [_# (doseq [f# ~instrumenters]
-                                           (f#))
+                                            (f#))
                                        result# (apply ~(symbol (name n) (name f)) (list ~@args))
                                        _# (doseq [g# ~deinstrumenters]
-                                           (g#))]
+                                            (g#))]
                                    result#)))))))
 
 
@@ -141,5 +143,4 @@
   (cyrik.omni-trace/run (thing2 1 2))
   (macroexpand '(cyrik.omni-trace/run (thing2 1 2)))
   (macro/cljs-macroexpand-all '(cyrik.omni-trace/run (thing2 1 2)))
-  .
-  )
+  .)

@@ -18,7 +18,6 @@
             [cyrik.omni-trace.graph :as flame])
   (:import (org.openjdk.jol.info ClassLayout GraphLayout)))
 
-(repl/add-libs '{com.rpl/specter {:mvn/version "1.1.3"}})
 (defn spit-pretty!
   "Writes the pretty-printed edn `data` into the `file`."
   [file data]
@@ -47,9 +46,10 @@
 (defn test-log [x]
   (inc x))
 (test-log 5)
-(defonce portal (p/open {:portal.launcher/window-title (System/getProperty "user.dir")}))
+
 (add-tap #'p/submit)
 (comment
+  (defonce portal (p/open {:editor :vs-code :portal.launcher/window-title (System/getProperty "user.dir")}))
   (portal.runtime/register! (partial into {}) {:name 'dev/->map})
   "https://github.com/Cyrik/omni-trace"
   ;; tracing + visualization + tool integrations
@@ -109,7 +109,7 @@
   ;; - deep-trace into core with fewer problems
 
 
-  
+
   (o/instrument-ns 'cyrik.omni-trace.testing-ns
                    {::o/workspace i/workspace})
 

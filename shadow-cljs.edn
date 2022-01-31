@@ -1,11 +1,11 @@
-{:nrepl    {:port 8777}
+{:nrepl    {:port 8777
+            :middleware [refactor-nrepl.middleware/wrap-refactor]}
  :verbose true
 
  :log {:level :debug}
  :deps     {:aliases [:cljs :dev :shadow-cljs]}
 
- :open-file-command
- ["code" :pwd "--goto" ["%s:%s:%s" :file :line :column]]
+ :open-file-command ["code" :pwd "--goto" ["%s:%s:%s" :file :line :column]]
 
  :dev-http {8280 "resources/public"}
  :build-defaults
