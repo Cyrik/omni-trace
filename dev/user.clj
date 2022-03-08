@@ -15,7 +15,9 @@
             [debux.common.util :as ut]
             [clj-async-profiler.core :as prof]
             [clojure.pprint :as pprint]
-            [cyrik.omni-trace.graph :as flame])
+            [cyrik.omni-trace.graph :as flame]
+            [clojure.zip :as zip]
+            [cyrik.omni-trace.tree :refer [last-call]])
   (:import (org.openjdk.jol.info ClassLayout GraphLayout)))
 
 (defn spit-pretty!
@@ -54,7 +56,7 @@
   "https://github.com/Cyrik/omni-trace"
   ;; tracing + visualization + tool integrations
   ;; debug your own code + understand calls into libs
-
+(cyrik.omni-trace.vscode/run (cyrik.omni-trace.testing-ns/run-machine))
   ;; run-traced
   (o/reset-workspace!)
   (o/run (cyrik.omni-trace.testing-ns/run-machine))
@@ -64,7 +66,6 @@
   ;; inner trace
   (ut/set-use-result-atom! true)
   (o/instrument-fn 'user/fact {:cyrik.omni-trace/workspace i/workspace :inner-trace true})
-  (fact 3)
   (:log @i/workspace)
   (o/reset-workspace!)
   (o/uninstrument-fn 'user/fact)
@@ -207,5 +208,4 @@
                 acc
                 (recur (* acc n) (dec n))))))
 
-  .
-  )
+  (o/run (fact 3)))

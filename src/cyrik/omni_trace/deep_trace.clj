@@ -52,21 +52,23 @@
     (apply-instrumenter deep-deps instrumenter)
     [deps deep-deps]))
 
-(defn deep-trace [n sym]
-  (deep-trace* n sym #(i/instrument-fn %)))
+(defn deep-trace
+  ([n sym] (deep-trace n sym {:cyrik.omni-trace/workspace i/workspace}))
+  ([n sym opts]
+   (deep-trace* n sym #(i/instrument-fn % opts))))
+
 (defn deep-untrace [n sym]
   (deep-trace* n sym #(i/uninstrument-fn %)))
 
-(defn run-traced [s & args]
+(defn run-traced [opts s & args]
   (let [v (resolve s)
         n (symbol (namespace s))
         s (symbol (name s))
-        [_deps-dag deep-deps] (deep-trace n s)
-        ;; _ (println v ns s deep-deps)
+        [_deps-dag deep-deps] (deep-trace n s opts)
         result (try (apply v args)
                     (catch Throwable t
                       (Throwable->map t)))
-        _ (apply-instrumenter deep-deps #(i/uninstrument-fn %))]
+        _ (apply-instrumenter deep-deps #(i/uninstrument-fn % opts))]
     result))
 
 (comment

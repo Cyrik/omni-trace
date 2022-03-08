@@ -89,13 +89,13 @@
 
 #?(:clj
    (defn run-traced [s & args]
-     (apply #'deep/run-traced (into [s] args))))
+     (apply #'deep/run-traced {:cyrik.omni-trace/workspace i/workspace} (into [s] args))))
 (macros/deftime
   #?(:clj
      (defmacro run 
        "Runs the form in traced mode. Does not work if the form starts with a macro."
        [form]       
-       (macros/case :clj `(deep/run-traced (~util/->sym ~(first form)) ~@(rest form))
+       (macros/case :clj `(deep/run-traced {:cyrik.omni-trace/workspace i/workspace} (~util/->sym ~(first form)) ~@(rest form))
                     :cljs `(do
                              ~(let [fun (ana-api/resolve &env (first form))
                                     args (rest form)

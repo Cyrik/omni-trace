@@ -1,5 +1,8 @@
-{:customREPLCommandSnippets
+{:customREPLHoverSnippets
+ [{:name "omni-trace trace-var"
+   :snippet "(require '[cyrik.omni-trace.vscode])(cyrik.omni-trace.vscode/hover \"$ns\" \"$hover-top-level-defined-symbol\")"}]
+ :customREPLCommandSnippets
  [{:name "omni-trace run and graph"
    :key "r"
-   :snippet "(require '[cyrik.omni-trace])(cyrik.omni-trace/run $current-form)(tap> (cyrik.omni-trace/flamegraph))(cyrik.omni-trace/reset-workspace!)"}]}
+   :snippet "(require '[cyrik.omni-trace])(require '[cyrik.omni-trace.vscode])(cyrik.omni-trace/reset-workspace! cyrik.omni-trace.vscode/workspace)(cyrik.omni-trace.vscode/run $current-form)(tap> (cyrik.omni-trace/flamegraph cyrik.omni-trace.vscode/workspace))"}]}
 
