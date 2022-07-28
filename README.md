@@ -11,7 +11,7 @@ or just through github source:
 ```clojure
 
 :deps {omni_trace/omni_trace  {:git/url "https://github.com/Cyrik/omni-trace"
-                               :sha     "5def7f9ad31d703317e5be5e64a57322e1c89eed"}}
+                               :sha     "07f290cbfa266ee2da214e1a67e49ba8cbf3f521"}}
                           
 ```
 
