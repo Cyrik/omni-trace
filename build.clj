@@ -1,4 +1,6 @@
 (ns build
+  "clojure -T:build deploy
+   clojure -T:build jar"
   (:require [clojure.tools.build.api :as b]
             [org.corfield.build :as bb]))
 

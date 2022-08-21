@@ -2,8 +2,7 @@
             :middleware [refactor-nrepl.middleware/wrap-refactor]}
  :verbose true
 
- :log {:level :debug}
- :deps     {:aliases [:cljs :dev :shadow-cljs]}
+ :deps     {:aliases [:cljs :dev :shadow-cljs :debux-src]}
 
  :open-file-command ["code" :pwd "--goto" ["%s:%s:%s" :file :line :column]]
 

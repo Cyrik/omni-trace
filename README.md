@@ -1,6 +1,6 @@
 # omni-trace
 
-Omnipotent/omniscient tracing core for debugging Clojure(script)
+reified execution for Clojure(script)
 
 API is still a little unstable but it's only for dev time so there shouldn't be any problems.
 
@@ -14,8 +14,6 @@ or just through github source:
                                :sha     "07f290cbfa266ee2da214e1a67e49ba8cbf3f521"}}
                           
 ```
-
-[slack channel](https://clojurians.slack.com/archives/C02P64MNXLZ)
 
 ## Usage
 
@@ -194,7 +192,6 @@ works pretty well already, but:
 - performance
 - callbacks from Portal so you can rerun an updated function with the old params by clicking on it in the Flamegraph
 - (maybe) timetravel in trace
-- [Calva](https://github.com/BetterThanTomorrow/calva/) integration to display traces inline
 
 ## Related works
 

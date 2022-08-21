@@ -1,12 +1,12 @@
 (ns cyrik.omni-trace
-  (:require
-   #?(:clj [cyrik.omni-trace.deep-trace :as deep])
-   #?(:clj [cyrik.omni-trace.util :as util])
-   [cyrik.omni-trace.instrument :as i]
-   [cyrik.omni-trace.graph :as flame]
-   [cljs.test]
-   #?(:clj [cljs.analyzer.api :as ana-api])
-   [net.cgrand.macrovich :as macros])
+  (:require [cljs.test]
+            [cyrik.omni-trace.graph :as flame]
+            [cyrik.omni-trace.instrument :as i]
+            [cyrik.omni-trace.tree :as tree]
+            [net.cgrand.macrovich :as macros]
+            #?(:clj [cyrik.omni-trace.deep-trace :as deep])
+            #?(:clj [cyrik.omni-trace.util :as util])
+            #?(:clj [cljs.analyzer.api :as ana-api]))
   #?(:cljs (:require-macros
             [cyrik.omni-trace :refer [instrument-fn uninstrument-fn instrument-ns uninstrument-ns
                                       run]])))
@@ -87,6 +87,10 @@
   ([root workspace]
    (flame/flamegraph (flame/flamedata @workspace root))))
 
+(defn last-call
+  ([call]
+   (tree/last-call call (:log @i/workspace))))
+
 #?(:clj
    (defn run-traced [s & args]
      (apply #'deep/run-traced {:cyrik.omni-trace/workspace i/workspace} (into [s] args))))
@@ -143,4 +147,4 @@
   (cyrik.omni-trace/run (thing2 1 2))
   (macroexpand '(cyrik.omni-trace/run (thing2 1 2)))
   (macro/cljs-macroexpand-all '(cyrik.omni-trace/run (thing2 1 2)))
-  .)
+  )

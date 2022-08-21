@@ -1,24 +1,22 @@
 (ns user
-  (:require [cyrik.omni-trace :as o]
-            [cyrik.omni-trace.testing-ns :as e]
-            [cyrik.omni-trace.instrument :as i]
-            [clojure.java.io :as io]
-            [portal.api :as p]
-            [criterium.core :as crit]
-            [debux.core :as d]
-            [clojure.walk :as walk]
-            [clojure.tools.namespace.repl]
-            [advent.day1]
-            [clj-memory-meter.core :as mm]
-            [zprint.core :as zp]
-            [clojure.tools.deps.alpha.repl :as repl]
-            [debux.common.util :as ut]
+  (:require [advent.day1]
             [clj-async-profiler.core :as prof]
+            [clj-memory-meter.core :as mm]
+            [clojure.java.io :as io]
             [clojure.pprint :as pprint]
+            [clojure.tools.namespace.repl]
+            [clojure.walk :as walk]
+            [criterium.core :as crit]
+            [cyrik.omni-trace :as o]
             [cyrik.omni-trace.graph :as flame]
-            [clojure.zip :as zip]
-            [cyrik.omni-trace.tree :refer [last-call]])
-  (:import (org.openjdk.jol.info ClassLayout GraphLayout)))
+            [cyrik.omni-trace.instrument :as i]
+            [cyrik.omni-trace.testing-ns :as e]
+            [debux.common.util :as ut]
+            [debux.core :as d]
+            [portal.api :as p]
+            [portal.runtime :as rt]
+            portal.runtime.jvm.editor)
+  (:import (org.openjdk.jol.info GraphLayout)))
 
 (defn spit-pretty!
   "Writes the pretty-printed edn `data` into the `file`."
@@ -42,21 +40,74 @@
     (if (zero? n)
       acc
       (recur (* acc n) (dec n)))))
-
+{:a :b}
 (defn test-inc [x]
   (inc x))
 (defn test-log [x]
   (inc x))
 (test-log 5)
-
+(type (p/eval-str "(+ 1 2 3)"))
 (add-tap #'p/submit)
+(defn goto-definition [args]
+  (portal.runtime.jvm.editor/goto-definition args))
+
+(portal.runtime.jvm.editor/goto-definition {:ns nil, :name "factorial", :file "/Users/lukas/Workspace/clojure/omni-trace/dev/demo.clj", :end-column 16, :source "factorial", :column 1, :coor [1], :line 52, :end-line 46, :arglists [["acc" "n"]]})
+(p/open {:editor :vs-code})
+(rt/register! #'goto-definition)
+(p/eval-str (str '(ns mine
+                    (:require ["vega-embed" :as vegaEmbed]
+                              [portal.ui.rpc :as rpc]
+                              [portal.ui.api :as api]
+                              [portal.ui.inspector :as inspector]))
+                 '(defn logger [name value command]
+                    (.log js/console (clj->js [name (js->clj value :keywordize-keys true) command])))
+                 '(defn add-signal-listner [value signal command]
+                    (. (.-view value) addSignalListener signal
+                       (fn [name value]
+                         (logger name value command)
+                         (rpc/call command (js->clj value :keywordize-keys true)))))
+                 '(js/console.log vegaEmbed/default)
+                 '(api/register-viewer!
+                   {:predicate map?
+                    :component (fn [val]
+                                 (reagent.core/create-class
+                                  {:display-name "vega-test3"
+                                   :component-did-mount (fn [this]
+                                                          (js/console.log (clj->js val))
+                                                          (-> (vegaEmbed/default (reagent.dom/dom-node this) (clj->js val)
+                                                                                 {:renderer :canvas
+                                                                                  :mode "vega-lite"})
+                                                              (.then (fn [value]
+                                                                                ;; (set! (.-current view) (.-view value))
+                                                                       (. (.-view value) addSignalListener "clicked" logger)
+                                                                       (. (.-view value) addSignalListener "key" logger)
+                                                                       (doseq [{:keys [:signal :command]} (:portal-opts val)]
+                                                                         (add-signal-listner value signal command))))))
+                                   :component-did-update (fn [this [_ new-doc new-opts]]
+                                                           (vegaEmbed/default (reagent.dom/dom-node this) new-doc {:renderer :canvas
+                                                                                                                   :mode "vega-lite"}))
+                                   :reagent-render (fn [val]
+                                                     [:div.viz])}))
+                    :name :portal.viewer/vega-test23})))
+(p/eval-str (str '(ns mine
+                    (:require ["vega-embed" :as vegaEmbed]
+                              [portal.ui.rpc :as rpc]
+                              [portal.ui.api :as api]
+                              [portal.ui.inspector :as inspector]))
+                 '(defn logger [name value command]
+                    (.log js/console #_(clj->js ["abc"])(clj->js [name (js->clj value :keywordize-keys true) command])))
+                 '(logger "a" "b" "c")))
+;; (defn goto-definition [_ args]
+;;   (portal.runtime.jvm.editor/goto-definition args))
+(rt/register! #'user/goto-definition)
 (comment
-  (defonce portal (p/open {:editor :vs-code :portal.launcher/window-title (System/getProperty "user.dir")}))
+  (def portal (p/open {:editor :vs-code :theme :portal.colors/solarized-light :portal.launcher/window-title (System/getProperty "user.dir")}))
+  (p/close)
   (portal.runtime/register! (partial into {}) {:name 'dev/->map})
   "https://github.com/Cyrik/omni-trace"
   ;; tracing + visualization + tool integrations
   ;; debug your own code + understand calls into libs
-(cyrik.omni-trace.vscode/run (cyrik.omni-trace.testing-ns/run-machine))
+  (cyrik.omni-trace.vscode/run (cyrik.omni-trace.testing-ns/run-machine))
   ;; run-traced
   (o/reset-workspace!)
   (o/run (cyrik.omni-trace.testing-ns/run-machine))
@@ -148,6 +199,13 @@
   (intern *ns* '~'symname "<<symdefinition>>")
   (prof/serve-files 8888)
   (reset! i/ns-blacklist [])
+  (o/untrace)
+  (crit/with-progress-reporting (crit/quick-bench (cyrik.omni-trace.testing-ns/run-machine) :verbose))
+  (crit/with-progress-reporting (crit/quick-bench (o/run-traced 'cyrik.omni-trace.testing-ns/run-machine) :verbose))
+  (o/reset-workspace!)
+  (o/instrument-ns 'cyrik.omni-trace.testing-ns)
+  (crit/with-progress-reporting (crit/quick-bench (cyrik.omni-trace.testing-ns/run-machine) :verbose))
+
   (prof/profile {:width 2400}
                 (dotimes [x 100] (o/run-traced 'cyrik.omni-trace.testing-ns/run-machine)))
   (reset! i/ns-blacklist ['cljs.core 'clojure.core])

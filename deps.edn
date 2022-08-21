@@ -1,11 +1,10 @@
 {:paths ["src"]
- :deps {org.clojure/clojure {:mvn/version "1.11.0-rc1"}
+ :deps {org.clojure/clojure {:mvn/version "1.11.1"}
         net.cgrand/macrovich {:mvn/version "0.2.1"}
         com.stuartsierra/dependency {:mvn/version "1.0.0"}
         clj-kondo/clj-kondo {:mvn/version "2022.03.04"}
         com.cognitect/transit-clj {:mvn/version "1.0.329"}
-        borkdude/dynaload {:mvn/version "0.2.2"}
-        org.clojure/clojurescript {:mvn/version "1.11.4"}}
+        borkdude/dynaload {:mvn/version "0.2.2"}}
  :aliases {:test {:extra-deps {lambdaisland/kaocha {:mvn/version "1.63.998"}
                                com.lambdaisland/kaocha-cljs {:mvn/version "1.2.123"}
                                org.clojure/tools.namespace {:mvn/version "1.1.0"}}}
@@ -27,7 +26,7 @@
                    :main-opts ["-M" "clj-check.check"]}
            :debux {:extra-deps {philoskim/debux
                                 {:git/url "https://github.com/Cyrik/debux.git"
-                                 :sha "a957ee863f08551d4c0a0adad85c501976c36ef2"}}}
+                                 :sha "f239e37dec196aa8c4ad09b4a5739aa39c0e8bf9"}}}
            :debux-src {:extra-deps {philoskim/debux {:local/root "../debux"}}}
            :dev {:jvm-opts ["-Djdk.attach.allowAttachSelf=true"
                             ;; to make clj-memory-meter work with JDK 16: https://github.com/clojure-goes-fast/clj-memory-meter/issues/8
@@ -46,9 +45,6 @@
                               com.clojure-goes-fast/clj-async-profiler {:mvn/version "0.5.1"}
                               ;; https://github.com/openjdk/jol
                               org.openjdk.jol/jol-core {:mvn/version "0.16"}
-                              philoskim/debux
-                              {:git/url "https://github.com/Cyrik/debux.git"
-                               :sha "a957ee863f08551d4c0a0adad85c501976c36ef2"}
                               com.clojure-goes-fast/clj-memory-meter {:mvn/version "0.1.3"}
                               org.clojure/tools.namespace {:mvn/version "1.2.0"}
                               org.clojure/tools.deps.alpha
@@ -58,8 +54,8 @@
                               clojure-future-spec/clojure-future-spec {:mvn/version "1.9.0"}
                               criterium/criterium {:mvn/version "0.4.6"}
                               net.clojars.cyrik/cljs-macroexpand {:mvn/version "0.1.1"}
-                              djblue/portal {:mvn/version "0.21.2"}}}
+                              djblue/portal {:mvn/version "0.26.0"}}}
            :shadow-cljs {:extra-deps {thheller/shadow-cljs {:mvn/version "2.17.7"}}}
            :cljs {:extra-deps
-                  {org.clojure/clojurescript {:mvn/version "1.10.879"}}}}}
+                  {org.clojure/clojurescript {:mvn/version "1.11.4"}}}}}
 
